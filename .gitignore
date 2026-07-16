@@ -14,7 +14,7 @@ yarn-error.log*
 /tmp
 /out-tsc
 /bazel-out
-.angular/cache/
+.angular/
 
 # ├── .NET ─────────────────────────────────────────────────────────
 bin/
