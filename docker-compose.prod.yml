@@ -1,0 +1,59 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: yeschef-db
+    environment:
+      POSTGRES_DB: yeschef
+      POSTGRES_USER: yeschef_admin
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-yeschef_secret_2024}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U yeschef_admin -d yeschef"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - yeschef-network
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: yeschef-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Default: Host=postgres;Port=5432;Database=yeschef;Username=yeschef_admin;Password=${DB_PASSWORD:-yeschef_secret_2024}
+      Jwt__Key: ${JWT_KEY:-SuperSecretKeyForYesChefApp2024!}
+      Jwt__Issuer: YesChef.Api
+      Jwt__Audience: YesChef.App
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - yeschef-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: yeschef-web
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - backend
+    networks:
+      - yeschef-network
+    restart: unless-stopped
+
+networks:
+  yeschef-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

@@ -1,0 +1,33 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: yeschef-db
+    environment:
+      POSTGRES_DB: yeschef
+      POSTGRES_USER: yeschef_admin
+      POSTGRES_PASSWORD: yeschef_secret_2024
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U yeschef_admin -d yeschef"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: yeschef-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@yeschef.com
+      PGADMIN_DEFAULT_PASSWORD: admin_2024
+    ports:
+      - "5050:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

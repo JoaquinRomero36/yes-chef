@@ -1,0 +1,6 @@
+@YesChef.Api_HostAddress = http://localhost:5230
+
+GET {{YesChef.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,69 @@
+# ─── Node / Angular ────────────────────────────────────────────
+node_modules/
+dist/
+*.js.map
+*.ts.map
+*.css.map
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Angular
+# compiled output
+/tmp
+/out-tsc
+/bazel-out
+.angular/cache/
+
+# ├── .NET ─────────────────────────────────────────────────────────
+bin/
+obj/
+*.user
+*.suo
+*.sln.docstates
+*.cache
+*.filelistabsolute.txt
+*.filelist.txt
+*.rsuser
+[Dd]ebug/
+[Rr]elease/
+.vs/
+*.nupkg
+*.snupkg
+*.Store.lock
+**/packages/*
+!**/packages/build/
+
+# ─── IDE / Editor ──────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+*.sublime-project
+*.sublime-workspace
+
+# ─── Docker ────────────────────────────────────────────────────
+docker-data/
+
+# ─── OS ────────────────────────────────────────────────────────
+*.pdb
+*.dll
+*.exe
+*.so
+*.dylib
+
+# ─── Environment ───────────────────────────────────────────────
+.env
+*.env.local
+*.env.development.local
+*.env.test.local
+*.env.production.local
+appsettings.Development.json
+
+# ─── Database ──────────────────────────────────────────────────
+*.sqlite
+*.sqlite3
