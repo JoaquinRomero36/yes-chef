@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using YesChef.Core.DTOs;
 using YesChef.Core.Entities;
 using YesChef.Core.Interfaces;
 
@@ -8,39 +9,52 @@ namespace YesChef.Api.Controllers;
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
-    private readonly IRepository<User> _userRepo;
+    private readonly IAuthService _authService;
     private readonly IRepository<Role> _roleRepo;
 
-    public AuthController(IRepository<User> userRepo, IRepository<Role> roleRepo)
+    public AuthController(IAuthService authService, IRepository<Role> roleRepo)
     {
-        _userRepo = userRepo;
+        _authService = authService;
         _roleRepo = roleRepo;
+    }
+
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginRequest request)
+    {
+        try
+        {
+            var response = await _authService.LoginAsync(request);
+            return Ok(response);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
     }
 
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
-        var existingUser = (await _userRepo.GetAllAsync())
-            .FirstOrDefault(u => u.Email == request.Email || u.Username == request.Username);
-
-        if (existingUser != null)
-            return BadRequest("El usuario ya existe");
-
-        var user = new User
+        try
         {
-            Username = request.Username,
-            Email = request.Email,
-            PasswordHash = HashPassword(request.Password),
-            FullName = request.FullName,
-            RoleId = request.RoleId
-        };
+            var user = await _authService.RegisterAsync(
+                request.Username, request.Email, request.Password,
+                request.FullName, request.RoleId);
 
-        await _userRepo.AddAsync(user);
-        return Ok(new { message = "Usuario creado exitosamente" });
+            return Ok(new { id = user.Id, message = "Usuario creado exitosamente" });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
-    private static string HashPassword(string password) =>
-        BCrypt.Net.BCrypt.HashPassword(password);
+    [HttpGet("roles")]
+    public async Task<IActionResult> GetRoles()
+    {
+        var roles = await _roleRepo.GetAllAsync();
+        return Ok(roles.Select(r => new { r.Id, r.Name, r.Description }));
+    }
 }
 
 public record RegisterRequest(string Username, string Email, string Password, string? FullName, Guid RoleId);
