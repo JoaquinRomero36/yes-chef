@@ -54,7 +54,7 @@ export class LoginComponent {
     this.error = '';
 
     this.auth.login({ email: this.email, password: this.password }).subscribe({
-      next: () => this.router.navigate(['/menu']),
+      next: () => this.router.navigate(['/dashboard/kitchen']),
       error: (err) => {
         this.error = err.error?.message || 'Error al iniciar sesión';
         this.loading = false;

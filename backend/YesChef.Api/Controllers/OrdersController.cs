@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using YesChef.Api.Hubs;
 using YesChef.Core.DTOs;
 using YesChef.Core.Entities;
 using YesChef.Infrastructure.Data;
@@ -11,10 +13,12 @@ namespace YesChef.Api.Controllers;
 public class OrdersController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly IHubContext<OrderHub> _hub;
 
-    public OrdersController(AppDbContext context)
+    public OrdersController(AppDbContext context, IHubContext<OrderHub> hub)
     {
         _context = context;
+        _hub = hub;
     }
 
     [HttpPost]
@@ -37,6 +41,9 @@ public class OrdersController : ControllerBase
         var products = await _context.Products
             .Where(p => productIds.Contains(p.Id))
             .ToDictionaryAsync(p => p.Id);
+
+        if (products.Count != productIds.Count)
+            return BadRequest(new { message = "Algún producto no existe" });
 
         var order = new Order
         {
@@ -65,36 +72,18 @@ public class OrdersController : ControllerBase
         _context.Orders.Add(order);
         await _context.SaveChangesAsync();
 
-        return Ok(new OrderResponse(
+        var response = new OrderResponse(
             order.Id, request.TableNumber, order.Status, order.Total,
             order.Notes, order.CreatedAt,
             order.OrderItems.Select(i => new OrderItemResponse(
                 i.Id, i.ProductId, products[i.ProductId].Name,
                 i.Quantity, i.UnitPrice, i.Status, i.Notes
             )).ToList()
-        ));
-    }
+        );
 
-    [HttpGet("table/{tableNumber:int}")]
-    public async Task<IActionResult> GetByTable(int tableNumber)
-    {
-        var orders = await _context.Orders
-            .Include(o => o.Table)
-            .Include(o => o.OrderItems)
-                .ThenInclude(oi => oi.Product)
-            .Where(o => o.Table != null && o.Table.Number == tableNumber)
-            .OrderByDescending(o => o.CreatedAt)
-            .Select(o => new OrderResponse(
-                o.Id, tableNumber, o.Status, o.Total,
-                o.Notes, o.CreatedAt,
-                o.OrderItems.Select(i => new OrderItemResponse(
-                    i.Id, i.ProductId, i.Product.Name,
-                    i.Quantity, i.UnitPrice, i.Status, i.Notes
-                )).ToList()
-            ))
-            .ToListAsync();
+        await _hub.Clients.Group("kitchen").SendAsync("NewOrder", response);
 
-        return Ok(orders);
+        return Ok(response);
     }
 
     [HttpGet("active")]
@@ -122,14 +111,30 @@ public class OrdersController : ControllerBase
     [HttpPatch("{id:guid}/status")]
     public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateOrderStatusRequest request)
     {
-        var order = await _context.Orders.FindAsync(id);
+        var order = await _context.Orders
+            .Include(o => o.Table)
+            .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Product)
+            .FirstOrDefaultAsync(o => o.Id == id);
+
         if (order is null) return NotFound();
 
         order.Status = request.Status;
         order.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 
-        return NoContent();
+        var response = new OrderResponse(
+            order.Id, order.Table!.Number, order.Status, order.Total,
+            order.Notes, order.CreatedAt,
+            order.OrderItems.Select(i => new OrderItemResponse(
+                i.Id, i.ProductId, i.Product.Name,
+                i.Quantity, i.UnitPrice, i.Status, i.Notes
+            )).ToList()
+        );
+
+        await _hub.Clients.Group("kitchen").SendAsync("OrderUpdated", response);
+
+        return Ok(response);
     }
 }
 

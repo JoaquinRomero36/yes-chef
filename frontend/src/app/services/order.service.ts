@@ -13,7 +13,11 @@ export class OrderService {
     return this.http.post<OrderResponse>(this.apiUrl, request);
   }
 
-  getByTable(tableNumber: number): Observable<OrderResponse[]> {
-    return this.http.get<OrderResponse[]>(`${this.apiUrl}/table/${tableNumber}`);
+  getActive(): Observable<OrderResponse[]> {
+    return this.http.get<OrderResponse[]>(`${this.apiUrl}/active`);
+  }
+
+  updateStatus(id: string, status: string): Observable<OrderResponse> {
+    return this.http.patch<OrderResponse>(`${this.apiUrl}/${id}/status`, { status });
   }
 }
