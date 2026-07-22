@@ -63,6 +63,11 @@ interface CategoryWithProducts extends Category {
 
       @if (step === 'info') {
         <div class="flex-1 flex flex-col items-center justify-center p-4 max-w-sm mx-auto">
+          <div class="w-full mb-4">
+            <button (click)="backToType()" class="text-gray-500 hover:text-gray-700 transition flex items-center gap-1">
+              ← Volver
+            </button>
+          </div>
           <h2 class="text-lg font-semibold text-gray-700 mb-6">
             @if (orderType === 'dine-in') {¿Cuál es tu mesa?}
             @if (orderType === 'takeaway') {Tus datos}
@@ -97,6 +102,9 @@ interface CategoryWithProducts extends Category {
 
       @if (step === 'menu' && view === 'menu') {
         <main class="flex-1 max-w-lg mx-auto p-4 w-full">
+          @if (error) {
+            <div class="bg-red-100 text-red-700 px-4 py-3 rounded-lg mb-4">{{ error }}</div>
+          }
           @if (loading) {
             <p class="text-center text-gray-500 py-8">Cargando menú...</p>
           } @else {
@@ -212,18 +220,39 @@ export class MenuComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.categoryService.getAll().subscribe(categories => {
-      this.productService.getAll().subscribe(products => {
-        this.categoriesWithProducts = categories
-          .filter(c => c.isActive)
-          .map(c => ({
-            ...c,
-            products: products.filter(p => p.isAvailable && p.categoryId === c.id)
-          }))
-          .filter(c => c.products.length > 0);
+    this.categoryService.getAll().subscribe({
+      next: categories => {
+        this.productService.getAll().subscribe({
+          next: products => {
+            this.categoriesWithProducts = categories
+              .filter(c => c.isActive)
+              .map(c => ({
+                ...c,
+                products: products.filter(p => p.isAvailable && p.categoryId === c.id)
+              }))
+              .filter(c => c.products.length > 0);
+            this.loading = false;
+          },
+          error: () => {
+            this.loading = false;
+            this.error = 'Error al cargar productos';
+          }
+        });
+      },
+      error: () => {
         this.loading = false;
-      });
+        this.error = 'Error al cargar el menú';
+      }
     });
+  }
+
+  backToType() {
+    this.orderType = 'dine-in';
+    this.tableInput = null;
+    this.contactName = '';
+    this.contactPhone = '';
+    this.deliveryAddress = '';
+    this.step = 'type';
   }
 
   selectType(type: 'dine-in' | 'takeaway' | 'delivery') {
