@@ -14,6 +14,12 @@ import { AuthService } from '../../services/auth.service';
           <a routerLink="/dashboard/kitchen" routerLinkActive="bg-emerald-600" class="block px-3 py-2 rounded-lg hover:bg-gray-700 transition">
             🍳 Cocina
           </a>
+          <a routerLink="/dashboard/reports" routerLinkActive="bg-emerald-600" class="block px-3 py-2 rounded-lg hover:bg-gray-700 transition">
+            📊 Reportes
+          </a>
+          <a routerLink="/dashboard/cash-register" routerLinkActive="bg-emerald-600" class="block px-3 py-2 rounded-lg hover:bg-gray-700 transition">
+            💰 Caja
+          </a>
           <a routerLink="/dashboard/admin" routerLinkActive="bg-emerald-600" class="block px-3 py-2 rounded-lg hover:bg-gray-700 transition">
             ⚙️ Admin
           </a>

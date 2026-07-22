@@ -14,6 +14,7 @@ public class AppDbContext : DbContext
     public DbSet<Table> Tables => Set<Table>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+    public DbSet<CashRegister> CashRegisters => Set<CashRegister>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

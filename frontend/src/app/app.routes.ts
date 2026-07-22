@@ -24,6 +24,14 @@ export const routes: Routes = [
       {
         path: 'admin',
         loadComponent: () => import('./pages/dashboard/admin/admin.component').then(m => m.AdminComponent)
+      },
+      {
+        path: 'reports',
+        loadComponent: () => import('./pages/dashboard/reports/reports.component').then(m => m.ReportsComponent)
+      },
+      {
+        path: 'cash-register',
+        loadComponent: () => import('./pages/dashboard/cash-register/cash-register.component').then(m => m.CashRegisterComponent)
       }
     ]
   },
