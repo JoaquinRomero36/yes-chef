@@ -64,6 +64,11 @@ docker-data/
 *.env.production.local
 appsettings.Development.json
 
+# ─── Playwright / Testing ────────────────────────────────────
+.playwright-mcp/
+menu-items.txt
+menu-snapshot.txt
+
 # ─── Database ──────────────────────────────────────────────────
 *.sqlite
 *.sqlite3
