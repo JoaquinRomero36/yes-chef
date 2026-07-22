@@ -3,16 +3,14 @@ services:
     image: postgres:16-alpine
     container_name: yeschef-db
     environment:
-      POSTGRES_DB: yeschef
       POSTGRES_USER: yeschef_admin
       POSTGRES_PASSWORD: yeschef_secret_2024
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U yeschef_admin -d yeschef"]
+      test: ["CMD-SHELL", "pg_isready -U yeschef_admin"]
       interval: 10s
       timeout: 5s
       retries: 5
