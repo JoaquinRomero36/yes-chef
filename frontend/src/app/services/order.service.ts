@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CreateOrderRequest, OrderResponse } from '../models/order.models';
 
@@ -13,8 +13,10 @@ export class OrderService {
     return this.http.post<OrderResponse>(this.apiUrl, request);
   }
 
-  getActive(): Observable<OrderResponse[]> {
-    return this.http.get<OrderResponse[]>(`${this.apiUrl}/active`);
+  getActive(type?: string): Observable<OrderResponse[]> {
+    let params = new HttpParams();
+    if (type) params = params.set('type', type);
+    return this.http.get<OrderResponse[]>(`${this.apiUrl}/active`, { params });
   }
 
   updateStatus(id: string, status: string): Observable<OrderResponse> {

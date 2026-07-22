@@ -1,7 +1,11 @@
 export interface CreateOrderRequest {
-  tableNumber: number;
-  items: CreateOrderItemRequest[];
+  orderType: 'dine-in' | 'takeaway' | 'delivery';
+  tableNumber: number | null;
+  contactName: string | null;
+  contactPhone: string | null;
+  deliveryAddress: string | null;
   notes: string | null;
+  items: CreateOrderItemRequest[];
 }
 
 export interface CreateOrderItemRequest {
@@ -12,9 +16,14 @@ export interface CreateOrderItemRequest {
 
 export interface OrderResponse {
   id: string;
-  tableNumber: number;
+  orderType: string;
+  tableNumber: number | null;
   status: string;
   total: number;
+  deliveryFee: number;
+  contactName: string | null;
+  contactPhone: string | null;
+  deliveryAddress: string | null;
   notes: string | null;
   createdAt: string;
   items: OrderItemResponse[];

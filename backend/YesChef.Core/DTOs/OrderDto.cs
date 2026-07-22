@@ -1,12 +1,22 @@
 namespace YesChef.Core.DTOs;
 
-public record CreateOrderRequest(int TableNumber, List<CreateOrderItemRequest> Items, string? Notes);
+public record CreateOrderRequest(
+    string OrderType,
+    int? TableNumber,
+    string? ContactName,
+    string? ContactPhone,
+    string? DeliveryAddress,
+    string? Notes,
+    List<CreateOrderItemRequest> Items
+);
 
 public record CreateOrderItemRequest(Guid ProductId, int Quantity, string? Notes);
 
 public record OrderResponse(
-    Guid Id, int TableNumber, string Status, decimal Total,
-    string? Notes, DateTime CreatedAt, List<OrderItemResponse> Items
+    Guid Id, string OrderType, int? TableNumber, string Status, decimal Total,
+    decimal DeliveryFee, string? ContactName, string? ContactPhone,
+    string? DeliveryAddress, string? Notes, DateTime CreatedAt,
+    List<OrderItemResponse> Items
 );
 
 public record OrderItemResponse(

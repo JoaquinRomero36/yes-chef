@@ -57,6 +57,7 @@ public class AppDbContext : DbContext
             e.HasOne(o => o.User)
                 .WithMany(u => u.Orders)
                 .HasForeignKey(o => o.UserId);
+            e.HasIndex(o => o.OrderType);
             e.HasIndex(o => o.Status);
             e.HasIndex(o => o.CreatedAt);
         });
