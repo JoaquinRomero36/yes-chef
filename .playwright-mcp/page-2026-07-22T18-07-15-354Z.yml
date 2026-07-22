@@ -1,0 +1,15 @@
+- generic [ref=e4]:
+  - banner [ref=e5]:
+    - heading "YesChef" [level=1] [ref=e7]
+  - generic [ref=e8]:
+    - heading "¿Cómo querés pedir?" [level=2] [ref=e9]
+    - generic [ref=e10]:
+      - button [ref=e11] [cursor=pointer]:
+        - text: 🍽️Comer acá
+        - paragraph [ref=e12]: Te atendemos en la mesa
+      - button [ref=e13] [cursor=pointer]:
+        - text: 🛍️Para llevar
+        - paragraph [ref=e14]: Retirás por el local
+      - button [ref=e15] [cursor=pointer]:
+        - text: 🚚Delivery
+        - paragraph [ref=e16]: Te lo llevamos a casa
