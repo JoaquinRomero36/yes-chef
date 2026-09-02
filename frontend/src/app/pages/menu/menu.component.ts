@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { CategoryService } from '../../services/category.service';
 import { ProductService } from '../../services/product.service';
 import { OrderService } from '../../services/order.service';
+import { PaymentMethod } from '../../models/order.models';
 import { Category } from '../../models/category.models';
 import { Product } from '../../models/product.models';
 import { ThemeToggleComponent } from '../../components/theme-toggle/theme-toggle.component';
@@ -265,6 +266,19 @@ interface CategoryWithProducts extends Category {
               <span>Total</span>
               <span>\${{ cartTotal().toFixed(2) }}</span>
             </div>
+            <div class="pt-2">
+              <p class="text-sm font-medium text-foreground mb-2">Método de pago</p>
+              <div class="flex gap-2">
+                @for (m of paymentMethods; track m.value) {
+                  <button type="button" (click)="paymentMethod = m.value"
+                    [class]="paymentMethod === m.value
+                      ? 'flex-1 border border-primary bg-primary/10 text-primary font-medium rounded-lg py-2 text-sm'
+                      : 'flex-1 border border-border rounded-lg py-2 text-sm text-muted-foreground hover:border-primary/50'">
+                    {{ m.label }}
+                  </button>
+                }
+              </div>
+            </div>
             <textarea [(ngModel)]="notes" placeholder="Notas para la cocina..." rows="2"
               class="w-full px-3 py-2 border border-border rounded-lg text-sm bg-card outline-none focus:ring-2 focus:ring-primary mt-2"></textarea>
             <div class="flex gap-2">
@@ -298,6 +312,12 @@ export class MenuComponent implements OnInit, OnDestroy {
   step: 'type' | 'info' | 'menu' = 'type';
   view: 'menu' | 'cart' = 'menu';
   orderType: 'dine-in' | 'takeaway' | 'delivery' = 'dine-in';
+  paymentMethod: PaymentMethod | null = null;
+  paymentMethods: { value: PaymentMethod; label: string }[] = [
+    { value: 'cash', label: 'Efectivo' },
+    { value: 'card', label: 'Tarjeta' },
+    { value: 'transfer', label: 'Transferencia' }
+  ];
 
   tableInput: number | null = null;
   tableNumber: number | null = null;
@@ -489,6 +509,7 @@ export class MenuComponent implements OnInit, OnDestroy {
       contactName: this.orderType !== 'dine-in' ? this.contactName : null,
       contactPhone: this.orderType !== 'dine-in' ? this.contactPhone : null,
       deliveryAddress: this.orderType === 'delivery' ? this.deliveryAddress : null,
+      paymentMethod: this.paymentMethod,
       notes: this.notes || null,
       items: this.cart.map(i => ({
         productId: i.product.id,
@@ -500,6 +521,7 @@ export class MenuComponent implements OnInit, OnDestroy {
         this.sent = true;
         this.cart = [];
         this.notes = '';
+        this.paymentMethod = null;
         this.sending = false;
       },
       error: (err) => {

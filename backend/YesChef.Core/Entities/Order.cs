@@ -14,5 +14,7 @@ public class Order : BaseEntity
     public string? ContactPhone { get; set; }
     public string? DeliveryAddress { get; set; }
     public string? Notes { get; set; }
+    public string? PaymentMethod { get; set; }
+    public DateTime? PaidAt { get; set; }
     public ICollection<OrderItem> OrderItems { get; set; } = [];
 }

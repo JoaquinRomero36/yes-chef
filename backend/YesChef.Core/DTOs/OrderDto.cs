@@ -6,6 +6,7 @@ public record CreateOrderRequest(
     string? ContactName,
     string? ContactPhone,
     string? DeliveryAddress,
+    string? PaymentMethod,
     string? Notes,
     List<CreateOrderItemRequest> Items
 );
@@ -15,7 +16,8 @@ public record CreateOrderItemRequest(Guid ProductId, int Quantity, string? Notes
 public record OrderResponse(
     Guid Id, string OrderType, int? TableNumber, string Status, decimal Total,
     decimal DeliveryFee, string? ContactName, string? ContactPhone,
-    string? DeliveryAddress, string? Notes, DateTime CreatedAt,
+    string? DeliveryAddress, string? PaymentMethod, DateTime? PaidAt,
+    string? Notes, DateTime CreatedAt,
     List<OrderItemResponse> Items
 );
 

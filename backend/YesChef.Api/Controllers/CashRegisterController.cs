@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using YesChef.Core.DTOs;
@@ -8,6 +9,7 @@ namespace YesChef.Api.Controllers;
 
 [ApiController]
 [Route("api/cash-register")]
+[Authorize(Roles = "admin,waiter,kitchen")]
 public class CashRegisterController : ControllerBase
 {
     private readonly AppDbContext _context;
@@ -31,7 +33,12 @@ public class CashRegisterController : ControllerBase
         var todayOrders = await _context.Orders
             .Where(o => o.CreatedAt >= active.OpenedAt
                      && o.Status != "cancelled")
-            .SumAsync(o => o.Total);
+            .ToListAsync();
+
+        var cashSales = todayOrders.Where(o => o.PaymentMethod == "cash").Sum(o => o.Total);
+        var cardSales = todayOrders.Where(o => o.PaymentMethod == "card").Sum(o => o.Total);
+        var transferSales = todayOrders.Where(o => o.PaymentMethod == "transfer").Sum(o => o.Total);
+        var totalSales = cashSales + cardSales + transferSales;
 
         return Ok(new
         {
@@ -40,7 +47,11 @@ public class CashRegisterController : ControllerBase
             active.OpenedAt,
             active.OpeningBalance,
             active.Notes,
-            todayOrders
+            todayOrders = todayOrders.Sum(o => o.Total),
+            cashSales,
+            cardSales,
+            transferSales,
+            totalSales
         });
     }
 
@@ -80,11 +91,26 @@ public class CashRegisterController : ControllerBase
         if (register is null)
             return BadRequest(new { message = "No hay caja abierta" });
 
+        // Ventas del turno derivadas de los pedidos, agrupadas por método de pago.
+        var sales = await _context.Orders
+            .Where(o => o.CreatedAt >= register.OpenedAt
+                     && o.Status != "cancelled")
+            .GroupBy(o => o.PaymentMethod)
+            .Select(g => new { Method = g.Key, Total = g.Sum(o => o.Total) })
+            .ToListAsync();
+
+        decimal MethodTotal(string? method) => sales.FirstOrDefault(s => s.Method == method)?.Total ?? 0m;
+
+        var cashSales = MethodTotal("cash");
+        var cardSales = MethodTotal("card");
+        var transferSales = MethodTotal("transfer");
+        var totalSales = cashSales + cardSales + transferSales;
+
         register.ClosedAt = DateTime.UtcNow;
         register.ClosingBalance = request.ClosingBalance;
-        register.CashSales = request.CashSales;
-        register.CardSales = request.CardSales;
-        register.TransferSales = request.TransferSales;
+        register.CashSales = cashSales;
+        register.CardSales = cardSales;
+        register.TransferSales = transferSales;
         register.Notes = request.Notes;
         register.Status = "closed";
         register.UpdatedAt = DateTime.UtcNow;
@@ -95,8 +121,7 @@ public class CashRegisterController : ControllerBase
             register.Id, register.OpenedAt, register.ClosedAt,
             register.OpeningBalance, register.ClosingBalance,
             register.CashSales, register.CardSales, register.TransferSales,
-            request.CashSales + request.CardSales + request.TransferSales,
-            register.Status, register.Notes
+            totalSales, register.Status, register.Notes
         ));
     }
 }

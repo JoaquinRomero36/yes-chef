@@ -4,9 +4,12 @@ export interface CreateOrderRequest {
   contactName: string | null;
   contactPhone: string | null;
   deliveryAddress: string | null;
+  paymentMethod: PaymentMethod | null;
   notes: string | null;
   items: CreateOrderItemRequest[];
 }
+
+export type PaymentMethod = 'cash' | 'card' | 'transfer';
 
 export interface CreateOrderItemRequest {
   productId: string;
@@ -24,6 +27,8 @@ export interface OrderResponse {
   contactName: string | null;
   contactPhone: string | null;
   deliveryAddress: string | null;
+  paymentMethod: string | null;
+  paidAt: string | null;
   notes: string | null;
   createdAt: string;
   items: OrderItemResponse[];

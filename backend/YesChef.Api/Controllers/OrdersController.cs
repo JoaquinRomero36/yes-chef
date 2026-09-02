@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -22,6 +23,7 @@ public class OrdersController : ControllerBase
     }
 
     [HttpPost]
+    [AllowAnonymous]
     public async Task<IActionResult> Create([FromBody] CreateOrderRequest request)
     {
         if (request.Items is null || request.Items.Count == 0)
@@ -30,6 +32,22 @@ public class OrdersController : ControllerBase
         var validTypes = new[] { "dine-in", "takeaway", "delivery" };
         if (!validTypes.Contains(request.OrderType))
             return BadRequest(new { message = "Tipo de pedido inválido. Use: dine-in, takeaway, delivery" });
+
+        var validPayments = new[] { "cash", "card", "transfer" };
+        if (request.PaymentMethod is not null && !validPayments.Contains(request.PaymentMethod.ToLowerInvariant()))
+            return BadRequest(new { message = "Método de pago inválido. Use: cash, card, transfer" });
+
+        foreach (var item in request.Items)
+        {
+            if (item.Quantity < 1 || item.Quantity > 99)
+                return BadRequest(new { message = "La cantidad de cada item debe estar entre 1 y 99" });
+        }
+
+        var duplicate = request.Items
+            .GroupBy(i => i.ProductId)
+            .FirstOrDefault(g => g.Count() > 1);
+        if (duplicate is not null)
+            return BadRequest(new { message = "No repitas el mismo producto en el pedido. Ajustá la cantidad." });
 
         if (request.OrderType == "dine-in" && !request.TableNumber.HasValue)
             return BadRequest(new { message = "Para comer en el local necesitás un número de mesa" });
@@ -72,6 +90,8 @@ public class OrdersController : ControllerBase
             DeliveryFee = deliveryFee,
             Notes = request.Notes,
             Status = "pending",
+            PaymentMethod = request.PaymentMethod?.ToLowerInvariant(),
+            PaidAt = request.PaymentMethod is null ? null : DateTime.UtcNow
         };
 
         foreach (var item in request.Items)
@@ -102,6 +122,7 @@ public class OrdersController : ControllerBase
     }
 
     [HttpGet("active")]
+    [Authorize(Roles = "admin,waiter,kitchen")]
     public async Task<IActionResult> GetActive([FromQuery] string? type)
     {
         var query = _context.Orders
@@ -122,6 +143,7 @@ public class OrdersController : ControllerBase
     }
 
     [HttpPatch("{id:guid}/status")]
+    [Authorize(Roles = "admin,waiter,kitchen")]
     public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateOrderStatusRequest request)
     {
         var order = await _context.Orders
@@ -155,6 +177,8 @@ public class OrdersController : ControllerBase
             order.ContactName,
             order.ContactPhone,
             order.DeliveryAddress,
+            order.PaymentMethod,
+            order.PaidAt,
             order.Notes,
             order.CreatedAt,
             order.OrderItems.Select(i => new OrderItemResponse(

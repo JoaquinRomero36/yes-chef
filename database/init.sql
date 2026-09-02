@@ -62,6 +62,8 @@ CREATE TABLE IF NOT EXISTS orders (
     contact_name VARCHAR(255),
     contact_phone VARCHAR(50),
     delivery_address TEXT,
+    payment_method VARCHAR(20),
+    paid_at TIMESTAMP WITH TIME ZONE,
     notes TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()

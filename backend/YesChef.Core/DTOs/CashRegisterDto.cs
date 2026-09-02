@@ -9,7 +9,4 @@ public record CashRegisterResponse(
 
 public record OpenCashRegisterRequest(decimal OpeningBalance, string? Notes);
 
-public record CloseCashRegisterRequest(
-    decimal ClosingBalance, decimal CashSales,
-    decimal CardSales, decimal TransferSales, string? Notes
-);
+public record CloseCashRegisterRequest(decimal ClosingBalance, string? Notes);

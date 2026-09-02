@@ -74,9 +74,6 @@ export class ReportsService {
 
   closeCashRegister(data: {
     closingBalance: number;
-    cashSales: number;
-    cardSales: number;
-    transferSales: number;
     notes?: string;
   }): Observable<any> {
     return this.http.post('/api/cash-register/close', data);

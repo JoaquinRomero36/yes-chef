@@ -29,13 +29,7 @@ import { ReportsService, CashRegisterStatus } from '../../../services/reports.se
           <details class="mt-4">
             <summary class="cursor-pointer text-primary font-medium text-sm">Cerrar caja</summary>
             <div class="mt-3 space-y-3">
-              <input type="number" [(ngModel)]="closeData.cashSales" placeholder="Efectivo" step="0.01"
-                class="w-full border border-border px-3 py-1.5 rounded-lg text-sm bg-card outline-none focus:ring-2 focus:ring-primary">
-              <input type="number" [(ngModel)]="closeData.cardSales" placeholder="Tarjeta" step="0.01"
-                class="w-full border border-border px-3 py-1.5 rounded-lg text-sm bg-card outline-none focus:ring-2 focus:ring-primary">
-              <input type="number" [(ngModel)]="closeData.transferSales" placeholder="Transferencia" step="0.01"
-                class="w-full border border-border px-3 py-1.5 rounded-lg text-sm bg-card outline-none focus:ring-2 focus:ring-primary">
-              <input type="number" [(ngModel)]="closeData.closingBalance" placeholder="Total final en caja" step="0.01"
+              <input type="number" [(ngModel)]="closeData.closingBalance" placeholder="Total de efectivo físico en caja" step="0.01"
                 class="w-full border border-border px-3 py-1.5 rounded-lg text-sm bg-card outline-none focus:ring-2 focus:ring-primary">
               <textarea [(ngModel)]="closeData.notes" placeholder="Notas" rows="2"
                 class="w-full border border-border px-3 py-1.5 rounded-lg text-sm bg-card outline-none focus:ring-2 focus:ring-primary"></textarea>
@@ -80,9 +74,6 @@ export class CashRegisterComponent implements OnInit {
   closeError = '';
   closeData = {
     closingBalance: 0,
-    cashSales: 0,
-    cardSales: 0,
-    transferSales: 0,
     notes: ''
   };
 
