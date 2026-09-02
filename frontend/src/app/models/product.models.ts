@@ -7,6 +7,7 @@ export interface Product {
   categoryName: string;
   imageUrl: string | null;
   isAvailable: boolean;
+  isAvailableForAway: boolean;
   isActive: boolean;
 }
 
@@ -16,6 +17,7 @@ export interface CreateProductRequest {
   price: number;
   categoryId: string;
   imageUrl: string | null;
+  isAvailableForAway?: boolean;
 }
 
 export interface UpdateProductRequest {
@@ -25,5 +27,6 @@ export interface UpdateProductRequest {
   categoryId: string;
   imageUrl: string | null;
   isAvailable: boolean;
+  isAvailableForAway: boolean;
   isActive: boolean;
 }

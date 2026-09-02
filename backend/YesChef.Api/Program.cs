@@ -41,7 +41,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins("http://localhost:4200")
               .AllowAnyMethod()
               .AllowAnyHeader();
     });
@@ -92,12 +92,12 @@ using (var scope = app.Services.CreateScope())
         db.SaveChanges();
 
         db.Products.AddRange(
-            new Product { Name = "Carpaccio de res", Description = "Finas láminas de res con parmesano, rúcula, alcaparras y dressing de limón", Price = 8500m, CategoryId = entradas.Id, IsAvailable = true },
+            new Product { Name = "Carpaccio de res", Description = "Finas láminas de res con parmesano, rúcula, alcaparras y dressing de limón", Price = 8500m, CategoryId = entradas.Id, IsAvailable = true, IsAvailableForAway = false },
             new Product { Name = "Bruschetta de tomate confit", Description = "Pan artesanal con tomates confit, albahaca fresca, burrata y reducción balsámica", Price = 6200m, CategoryId = entradas.Id, IsAvailable = true },
             new Product { Name = "Langostinos al ajillo", Description = "Langostinos salteados con ajo, perejil, vino blanco y un toque de ají molido", Price = 9800m, CategoryId = entradas.Id, IsAvailable = true },
-            new Product { Name = "Sopa de cebolla gratinada", Description = "Sopa de cebolla caramelizada con crutones y queso gruyère gratinado", Price = 5600m, CategoryId = entradas.Id, IsAvailable = true },
-            new Product { Name = "Tartar de salmón", Description = "Salmón fresco cortado a cuchillo con palta, mango, cebolla morada y salsa de soja", Price = 10500m, CategoryId = entradas.Id, IsAvailable = true },
-            new Product { Name = "Provoleta", Description = "Provoleta a la parrilla con orégano, tomates secos y aceitunas negras", Price = 7200m, CategoryId = entradas.Id, IsAvailable = true },
+            new Product { Name = "Sopa de cebolla gratinada", Description = "Sopa de cebolla caramelizada con crutones y queso gruyère gratinado", Price = 5600m, CategoryId = entradas.Id, IsAvailable = true, IsAvailableForAway = false },
+            new Product { Name = "Tartar de salmón", Description = "Salmón fresco cortado a cuchillo con palta, mango, cebolla morada y salsa de soja", Price = 10500m, CategoryId = entradas.Id, IsAvailable = true, IsAvailableForAway = false },
+            new Product { Name = "Provoleta", Description = "Provoleta a la parrilla con orégano, tomates secos y aceitunas negras", Price = 7200m, CategoryId = entradas.Id, IsAvailable = true, IsAvailableForAway = false },
 
             new Product { Name = "Ensalada César", Description = "Pollo braseado, lechuga romana, crutones, parmesano y aderezo césar casero", Price = 6800m, CategoryId = ensaladas.Id, IsAvailable = true },
             new Product { Name = "Ensalada de rúcula y peras", Description = "Rúcula fresca, peras caramelizadas, parmesano en lascas, nueces y vinagreta de miel", Price = 6200m, CategoryId = ensaladas.Id, IsAvailable = true },
@@ -119,7 +119,7 @@ using (var scope = app.Services.CreateScope())
             new Product { Name = "Costillas BBQ", Description = "Costillas de cerdo glaseadas con BBQ casera, coleslaw y papas rústicas", Price = 13800m, CategoryId = carnes.Id, IsAvailable = true },
 
             new Product { Name = "Salmón glaseado", Description = "Salmón glaseado con miel y mostaza, acompañado de espárragos y puré de coliflor", Price = 14200m, CategoryId = pescados.Id, IsAvailable = true },
-            new Product { Name = "Paella de mariscos", Description = "Paella valenciana con camarones, mejillones, calamares, y arroz bomba", Price = 15800m, CategoryId = pescados.Id, IsAvailable = true },
+            new Product { Name = "Paella de mariscos", Description = "Paella valenciana con camarones, mejillones, calamares, y arroz bomba", Price = 15800m, CategoryId = pescados.Id, IsAvailable = true, IsAvailableForAway = false },
             new Product { Name = "Ceviche de corvina", Description = "Corvina fresca marinada en limón, cebolla morada, ají limo y camote", Price = 9800m, CategoryId = pescados.Id, IsAvailable = true },
             new Product { Name = "Merluza negra", Description = "Merluza negra con risotto de limón, alcaparras y manteca de eneldo", Price = 16500m, CategoryId = pescados.Id, IsAvailable = true },
 
@@ -129,12 +129,12 @@ using (var scope = app.Services.CreateScope())
 
             new Product { Name = "Tiramisú", Description = "Tiramisú clásico con mascarpone, café y cacao", Price = 5200m, CategoryId = postres.Id, IsAvailable = true },
             new Product { Name = "Cheesecake de maracuyá", Description = "Cheesecake cremoso con coulis de maracuyá y base de galletitas", Price = 5600m, CategoryId = postres.Id, IsAvailable = true },
-            new Product { Name = "Volcán de chocolate", Description = "Volcán de chocolate con centro fundido y helado de vainilla", Price = 6200m, CategoryId = postres.Id, IsAvailable = true },
-            new Product { Name = "Crème brûlée", Description = "Crème brûlée de vainilla con caramelo crocante y frutos rojos", Price = 5500m, CategoryId = postres.Id, IsAvailable = true },
+            new Product { Name = "Volcán de chocolate", Description = "Volcán de chocolate con centro fundido y helado de vainilla", Price = 6200m, CategoryId = postres.Id, IsAvailable = true, IsAvailableForAway = false },
+            new Product { Name = "Crème brûlée", Description = "Crème brûlée de vainilla con caramelo crocante y frutos rojos", Price = 5500m, CategoryId = postres.Id, IsAvailable = true, IsAvailableForAway = false },
             new Product { Name = "Panna cotta", Description = "Panna cotta de vainilla con coulis de frutos rojos y menta fresca", Price = 5200m, CategoryId = postres.Id, IsAvailable = true },
             new Product { Name = "Mousse de chocolate blanco", Description = "Mousse de chocolate blanco con coulis de frutos rojos y crocante de almendras", Price = 5800m, CategoryId = postres.Id, IsAvailable = true },
             new Product { Name = "Flan casero", Description = "Flan casero con dulce de leche y crema batida", Price = 4800m, CategoryId = postres.Id, IsAvailable = true },
-            new Product { Name = "Helado artesanal", Description = "Dos bochas de helado artesanal (vainilla, chocolate, dulce de leche o frutilla)", Price = 4200m, CategoryId = postres.Id, IsAvailable = true },
+            new Product { Name = "Helado artesanal", Description = "Dos bochas de helado artesanal (vainilla, chocolate, dulce de leche o frutilla)", Price = 4200m, CategoryId = postres.Id, IsAvailable = true, IsAvailableForAway = false },
             new Product { Name = "Brownie con helado", Description = "Brownie de chocolate con nueces, helado de vainilla y salsa de dulce de leche", Price = 5800m, CategoryId = postres.Id, IsAvailable = true },
             new Product { Name = "Tarta de limón", Description = "Tarta de limón con merengue italiano y base sablée", Price = 5200m, CategoryId = postres.Id, IsAvailable = true },
 

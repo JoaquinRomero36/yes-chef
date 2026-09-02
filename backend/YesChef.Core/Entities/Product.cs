@@ -9,6 +9,7 @@ public class Product : BaseEntity
     public Category Category { get; set; } = null!;
     public string? ImageUrl { get; set; }
     public bool IsAvailable { get; set; } = true;
+    public bool IsAvailableForAway { get; set; } = true;
     public bool IsActive { get; set; } = true;
     public ICollection<OrderItem> OrderItems { get; set; } = [];
 }

@@ -34,7 +34,7 @@ public class ProductsController : ControllerBase
             .Select(p => new ProductDto(
                 p.Id, p.Name, p.Description, p.Price,
                 p.CategoryId, p.Category!.Name, p.ImageUrl,
-                p.IsAvailable, p.IsActive))
+                p.IsAvailable, p.IsAvailableForAway, p.IsActive))
             .ToListAsync();
 
         return Ok(products);
@@ -52,7 +52,7 @@ public class ProductsController : ControllerBase
         return Ok(new ProductDto(
             product.Id, product.Name, product.Description, product.Price,
             product.CategoryId, product.Category!.Name, product.ImageUrl,
-            product.IsAvailable, product.IsActive));
+            product.IsAvailable, product.IsAvailableForAway, product.IsActive));
     }
 
     [HttpPost]
@@ -68,7 +68,8 @@ public class ProductsController : ControllerBase
             Description = request.Description,
             Price = request.Price,
             CategoryId = request.CategoryId,
-            ImageUrl = request.ImageUrl
+            ImageUrl = request.ImageUrl,
+            IsAvailableForAway = request.IsAvailableForAway
         };
 
         _context.Products.Add(product);
@@ -78,7 +79,7 @@ public class ProductsController : ControllerBase
             new ProductDto(
                 product.Id, product.Name, product.Description, product.Price,
                 product.CategoryId, category.Name, product.ImageUrl,
-                product.IsAvailable, product.IsActive));
+                product.IsAvailable, product.IsAvailableForAway, product.IsActive));
     }
 
     [HttpPut("{id:guid}")]
@@ -97,6 +98,7 @@ public class ProductsController : ControllerBase
         product.CategoryId = request.CategoryId;
         product.ImageUrl = request.ImageUrl;
         product.IsAvailable = request.IsAvailable;
+        product.IsAvailableForAway = request.IsAvailableForAway;
         product.IsActive = request.IsActive;
         product.UpdatedAt = DateTime.UtcNow;
 
