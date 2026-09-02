@@ -16,10 +16,15 @@ public class ReportsController : ControllerBase
         _context = context;
     }
 
+    private static DateTime UtcDay(DateTime? value, DateTime fallback)
+    {
+        return DateTime.SpecifyKind((value ?? fallback).Date, DateTimeKind.Utc);
+    }
+
     [HttpGet("daily-sales")]
     public async Task<IActionResult> GetDailySales([FromQuery] DateTime? date)
     {
-        var day = (date ?? DateTime.Today).Date;
+        var day = UtcDay(date, DateTime.UtcNow);
         var nextDay = day.AddDays(1);
 
         var orders = await _context.Orders
@@ -51,34 +56,34 @@ public class ReportsController : ControllerBase
     [HttpGet("top-products")]
     public async Task<IActionResult> GetTopProducts([FromQuery] DateTime? from, [FromQuery] DateTime? to)
     {
-        var fromDate = (from ?? DateTime.Today.AddDays(-30)).Date;
-        var toDate = (to ?? DateTime.Today.AddDays(1)).Date;
+        var fromDate = UtcDay(from, DateTime.UtcNow.AddDays(-30));
+        var toDate = UtcDay(to, DateTime.UtcNow.AddDays(1));
 
         var items = await _context.OrderItems
-            .Include(i => i.Product)
             .Include(i => i.Order)
-            .Where(i => i.Order!.CreatedAt >= fromDate
+            .Where(i => i.Order.CreatedAt >= fromDate
                      && i.Order.CreatedAt < toDate
                      && i.Order.Status != "cancelled")
             .GroupBy(i => new { i.ProductId, i.Product.Name })
-            .Select(g => new TopProductResponse(
+            .Select(g => new
+            {
                 g.Key.ProductId,
                 g.Key.Name,
-                g.Sum(i => i.Quantity),
-                g.Sum(i => i.UnitPrice * i.Quantity)
-            ))
-            .OrderByDescending(r => r.TotalQuantity)
+                TotalQuantity = g.Sum(i => i.Quantity),
+                Revenue = g.Sum(i => i.UnitPrice * i.Quantity)
+            })
+            .OrderByDescending(x => x.TotalQuantity)
             .Take(10)
             .ToListAsync();
 
-        return Ok(items);
+        return Ok(items.Select(i => new TopProductResponse(i.ProductId, i.Name, i.TotalQuantity, i.Revenue)));
     }
 
     [HttpGet("summary")]
     public async Task<IActionResult> GetSummary([FromQuery] DateTime? from, [FromQuery] DateTime? to)
     {
-        var fromDate = (from ?? DateTime.Today.AddDays(-30)).Date;
-        var toDate = (to ?? DateTime.Today.AddDays(1)).Date;
+        var fromDate = UtcDay(from, DateTime.UtcNow.AddDays(-30));
+        var toDate = UtcDay(to, DateTime.UtcNow.AddDays(1));
 
         var orders = await _context.Orders
             .Where(o => o.CreatedAt >= fromDate
@@ -87,9 +92,8 @@ public class ReportsController : ControllerBase
             .ToListAsync();
 
         var topProduct = await _context.OrderItems
-            .Include(i => i.Product)
             .Include(i => i.Order)
-            .Where(i => i.Order!.CreatedAt >= fromDate
+            .Where(i => i.Order.CreatedAt >= fromDate
                      && i.Order.CreatedAt < toDate
                      && i.Order.Status != "cancelled")
             .GroupBy(i => i.Product.Name)

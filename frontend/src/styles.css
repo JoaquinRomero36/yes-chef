@@ -1,3 +1,142 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ─── Design tokens (shadcn-style) ─────────────────────────── */
+:root {
+  --card: #ffffff;
+  --ring: #34a85a;
+  --input: #d4d4d4;
+  --muted: #ddd9c4;
+  --accent: #66d9ef;
+  --border: #d4d4d4;
+  --radius: 0.5rem;
+  --chart-1: #34a85a;
+  --chart-2: #6495ed;
+  --chart-3: #66d9ef;
+  --chart-4: #4682b4;
+  --chart-5: #1a9641;
+  --popover: #ffffff;
+  --primary: #34a85a;
+  --sidebar: #f9f9fa;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
+  --secondary: #6495ed;
+  --background: #f9f9fa;
+  --font-serif: 'Source Serif 4', serif;
+  --foreground: #333333;
+  --destructive: #ef4444;
+  --sidebar-ring: #34a85a;
+  --sidebar-accent: #66d9ef;
+  --sidebar-border: #d4d4d4;
+  --card-foreground: #333333;
+  --sidebar-primary: #34a85a;
+  --muted-foreground: #6e6e6e;
+  --accent-foreground: #333333;
+  --popover-foreground: #333333;
+  --primary-foreground: #ffffff;
+  --sidebar-foreground: #333333;
+  --secondary-foreground: #ffffff;
+  --destructive-foreground: #ffffff;
+  --sidebar-accent-foreground: #333333;
+  --sidebar-primary-foreground: #ffffff;
+}
+
+.dark {
+  --card: #2f3436;
+  --ring: #34a85a;
+  --input: #444444;
+  --muted: #444444;
+  --accent: #6495ed;
+  --border: #444444;
+  --radius: 0.5rem;
+  --chart-1: #34a85a;
+  --chart-2: #4682b4;
+  --chart-3: #6495ed;
+  --chart-4: #66d9ef;
+  --chart-5: #1a9641;
+  --popover: #2f3436;
+  --primary: #34a85a;
+  --sidebar: #1a1d23;
+  --secondary: #4682b4;
+  --background: #1a1d23;
+  --foreground: #e5e5e5;
+  --destructive: #ef4444;
+  --sidebar-ring: #34a85a;
+  --sidebar-accent: #6495ed;
+  --sidebar-border: #444444;
+  --card-foreground: #e5e5e5;
+  --sidebar-primary: #34a85a;
+  --muted-foreground: #a3a3a3;
+  --accent-foreground: #e5e5e5;
+  --popover-foreground: #e5e5e5;
+  --primary-foreground: #ffffff;
+  --sidebar-foreground: #e5e5e5;
+  --secondary-foreground: #e5e5e5;
+  --destructive-foreground: #ffffff;
+  --sidebar-accent-foreground: #e5e5e5;
+  --sidebar-primary-foreground: #ffffff;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--background);
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* ─── Animaciones ─────────────────────────────────────── */
+@keyframes anim-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes anim-fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes anim-fade-down {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes anim-slide-in-right {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes anim-pop {
+  0% { transform: scale(0.6); }
+  60% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+@keyframes anim-zoom-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes anim-fade-in-down {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.anim-fade-in { animation: anim-fade-in 0.4s ease-out both; }
+.anim-fade-up { animation: anim-fade-up 0.4s ease-out both; }
+.anim-fade-down { animation: anim-fade-down 0.35s ease-out both; }
+.anim-slide-in-right { animation: anim-slide-in-right 0.35s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.anim-pop { animation: anim-pop 0.35s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.anim-zoom-in { animation: anim-zoom-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

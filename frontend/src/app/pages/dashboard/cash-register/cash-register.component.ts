@@ -9,58 +9,58 @@ import { ReportsService, CashRegisterStatus } from '../../../services/reports.se
   imports: [FormsModule, DatePipe],
   template: `
     <div class="p-6">
-      <h1 class="text-2xl font-bold text-gray-800 mb-6">💰 Caja</h1>
+      <h1 class="text-2xl font-bold text-foreground mb-6">Caja</h1>
 
       @if (loading) {
-        <p class="text-gray-500">Cargando...</p>
+        <p class="text-muted-foreground">Cargando...</p>
       } @else if (status?.status === 'open') {
-        <div class="bg-white rounded-xl border p-6 max-w-md">
-          <div class="flex items-center gap-2 text-emerald-700 mb-4">
-            <span class="w-3 h-3 bg-emerald-500 rounded-full"></span>
+        <div class="bg-card rounded-xl border border-border p-6 max-w-md">
+          <div class="flex items-center gap-2 text-primary mb-4">
+            <span class="w-3 h-3 bg-primary rounded-full"></span>
             <span class="font-semibold">Caja abierta</span>
           </div>
 
           <div class="space-y-2 text-sm mb-4">
-            <p><span class="text-gray-500">Abierta:</span> {{ status!.openedAt | date:'dd/MM HH:mm' }}</p>
-            <p><span class="text-gray-500">Fondo inicial:</span> \${{ status!.openingBalance?.toFixed(2) }}</p>
-            <p><span class="text-gray-500">Ventas del turno:</span> \${{ status!.todayOrders?.toFixed(2) }}</p>
+            <p><span class="text-muted-foreground">Abierta:</span> {{ status!.openedAt | date:'dd/MM HH:mm' }}</p>
+            <p><span class="text-muted-foreground">Fondo inicial:</span> \${{ status!.openingBalance?.toFixed(2) }}</p>
+            <p><span class="text-muted-foreground">Ventas del turno:</span> \${{ status!.todayOrders?.toFixed(2) }}</p>
           </div>
 
           <details class="mt-4">
-            <summary class="cursor-pointer text-emerald-700 font-medium text-sm">Cerrar caja</summary>
+            <summary class="cursor-pointer text-primary font-medium text-sm">Cerrar caja</summary>
             <div class="mt-3 space-y-3">
               <input type="number" [(ngModel)]="closeData.cashSales" placeholder="Efectivo" step="0.01"
-                class="w-full border px-3 py-1.5 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500">
+                class="w-full border border-border px-3 py-1.5 rounded-lg text-sm bg-card outline-none focus:ring-2 focus:ring-primary">
               <input type="number" [(ngModel)]="closeData.cardSales" placeholder="Tarjeta" step="0.01"
-                class="w-full border px-3 py-1.5 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500">
+                class="w-full border border-border px-3 py-1.5 rounded-lg text-sm bg-card outline-none focus:ring-2 focus:ring-primary">
               <input type="number" [(ngModel)]="closeData.transferSales" placeholder="Transferencia" step="0.01"
-                class="w-full border px-3 py-1.5 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500">
+                class="w-full border border-border px-3 py-1.5 rounded-lg text-sm bg-card outline-none focus:ring-2 focus:ring-primary">
               <input type="number" [(ngModel)]="closeData.closingBalance" placeholder="Total final en caja" step="0.01"
-                class="w-full border px-3 py-1.5 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500">
+                class="w-full border border-border px-3 py-1.5 rounded-lg text-sm bg-card outline-none focus:ring-2 focus:ring-primary">
               <textarea [(ngModel)]="closeData.notes" placeholder="Notas" rows="2"
-                class="w-full border px-3 py-1.5 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+                class="w-full border border-border px-3 py-1.5 rounded-lg text-sm bg-card outline-none focus:ring-2 focus:ring-primary"></textarea>
               <button (click)="closeRegister()" [disabled]="closing"
-                class="w-full bg-red-600 text-white py-2 rounded-lg text-sm hover:bg-red-700 transition disabled:opacity-50">
+                class="w-full bg-destructive text-destructive-foreground py-2 rounded-lg text-sm hover:bg-destructive/90 transition disabled:opacity-50">
                 {{ closing ? 'Cerrando...' : 'Cerrar caja' }}
               </button>
               @if (closeError) {
-                <p class="text-red-600 text-sm">{{ closeError }}</p>
+                <p class="text-destructive text-sm">{{ closeError }}</p>
               }
             </div>
           </details>
         </div>
       } @else {
-        <div class="bg-white rounded-xl border p-6 max-w-md">
-          <p class="text-gray-500 mb-4">No hay caja abierta</p>
+        <div class="bg-card rounded-xl border border-border p-6 max-w-md">
+          <p class="text-muted-foreground mb-4">No hay caja abierta</p>
           <div class="space-y-3">
             <input type="number" [(ngModel)]="openingBalance" placeholder="Fondo inicial" step="0.01"
-              class="w-full border px-3 py-1.5 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500">
+              class="w-full border border-border px-3 py-1.5 rounded-lg text-sm bg-card outline-none focus:ring-2 focus:ring-primary">
             <button (click)="openRegister()" [disabled]="opening"
-              class="w-full bg-emerald-600 text-white py-2 rounded-lg text-sm hover:bg-emerald-700 transition disabled:opacity-50">
+              class="w-full bg-primary text-primary-foreground py-2 rounded-lg text-sm hover:bg-primary/90 transition disabled:opacity-50">
               {{ opening ? 'Abriendo...' : 'Abrir caja' }}
             </button>
             @if (openError) {
-              <p class="text-red-600 text-sm">{{ openError }}</p>
+              <p class="text-destructive text-sm">{{ openError }}</p>
             }
           </div>
         </div>

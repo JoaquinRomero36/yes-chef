@@ -5,15 +5,24 @@
   <title>YesChef</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#10b981">
+  <meta name="theme-color" content="#34a85a">
   <meta name="description" content="Sistema de gestión para restaurantes">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192x192.svg">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <script>
+    (function () {
+      var stored = null;
+      try { stored = localStorage.getItem('yeschef_theme'); } catch (e) {}
+      var dark = stored ? stored === 'dark'
+        : window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (dark) document.documentElement.classList.add('dark');
+    })();
+  </script>
 </head>
-<body class="bg-gray-50 text-gray-900 antialiased">
+<body class="antialiased">
   <app-root></app-root>
 </body>
 </html>
