@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using YesChef.Core.DTOs;
@@ -7,6 +8,7 @@ namespace YesChef.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Roles = "admin,waiter,kitchen")]
 public class ReportsController : ControllerBase
 {
     private readonly AppDbContext _context;

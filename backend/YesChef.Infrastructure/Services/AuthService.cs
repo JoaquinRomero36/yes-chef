@@ -26,7 +26,7 @@ public class AuthService : IAuthService
     {
         var user = await _context.Users
             .Include(u => u.Role)
-            .FirstOrDefaultAsync(u => u.Email == request.Email);
+            .FirstOrDefaultAsync(u => u.Email == request.Email.ToLowerInvariant().Trim());
 
         if (user is null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             throw new UnauthorizedAccessException("Credenciales inválidas");
@@ -41,16 +41,19 @@ public class AuthService : IAuthService
 
     public async Task<User> RegisterAsync(string username, string email, string password, string? fullName, Guid roleId)
     {
+        var normalizedEmail = email.ToLowerInvariant().Trim();
+        var normalizedUsername = username.Trim();
+
         var exists = await _context.Users
-            .AnyAsync(u => u.Email == email || u.Username == username);
+            .AnyAsync(u => u.Email == normalizedEmail || u.Username == normalizedUsername);
 
         if (exists)
             throw new InvalidOperationException("El usuario ya existe");
 
         var user = new User
         {
-            Username = username,
-            Email = email,
+            Username = normalizedUsername,
+            Email = normalizedEmail,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
             FullName = fullName,
             RoleId = roleId,

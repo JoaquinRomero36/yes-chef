@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using YesChef.Core.DTOs;
@@ -9,6 +10,7 @@ namespace YesChef.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[AllowAnonymous]
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
@@ -65,6 +67,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("users")]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> CreateStaff([FromBody] CreateStaffRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Username) ||
@@ -110,6 +113,3 @@ public class AuthController : ControllerBase
         return Ok(roles.Select(r => new { r.Id, r.Name, r.Description }));
     }
 }
-
-public record RegisterRequest(string Username, string Email, string Password, string? FullName);
-public record CreateStaffRequest(string Username, string Email, string Password, string? FullName, Guid RoleId);

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using YesChef.Core.DTOs;
@@ -18,6 +19,7 @@ public class CategoriesController : ControllerBase
     }
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> GetAll()
     {
         var categories = await _context.Categories
@@ -31,6 +33,7 @@ public class CategoriesController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetById(Guid id)
     {
         var category = await _context.Categories.FindAsync(id);
@@ -40,6 +43,7 @@ public class CategoriesController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> Create([FromBody] CreateCategoryRequest request)
     {
         var category = new Category
@@ -57,6 +61,7 @@ public class CategoriesController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCategoryRequest request)
     {
         var category = await _context.Categories.FindAsync(id);
@@ -73,6 +78,7 @@ public class CategoriesController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> Delete(Guid id)
     {
         var category = await _context.Categories.FindAsync(id);

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using YesChef.Core.DTOs;
@@ -18,6 +19,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> GetAll([FromQuery] Guid? categoryId)
     {
         var query = _context.Products
@@ -41,6 +43,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetById(Guid id)
     {
         var product = await _context.Products
@@ -56,6 +59,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> Create([FromBody] CreateProductRequest request)
     {
         var category = await _context.Categories.FindAsync(request.CategoryId);
@@ -83,6 +87,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateProductRequest request)
     {
         var product = await _context.Products.FindAsync(id);
@@ -107,6 +112,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> Delete(Guid id)
     {
         var product = await _context.Products.FindAsync(id);
