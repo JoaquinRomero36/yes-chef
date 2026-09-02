@@ -1,41 +1,77 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
+import { ThemeToggleComponent } from '../../../components/theme-toggle/theme-toggle.component';
+import { IconComponent } from '../../../components/icon/icon.component';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, ThemeToggleComponent, IconComponent],
   template: `
-    <div class="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <div class="w-full max-w-sm">
-        <h1 class="text-2xl font-bold text-center text-emerald-600 mb-6">Iniciar Sesión</h1>
+    <div class="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden anim-fade-in">
+      <div class="absolute top-4 right-4">
+        <app-theme-toggle />
+      </div>
 
-        @if (error) {
-          <div class="bg-red-100 text-red-700 px-4 py-2 rounded-lg mb-4">{{ error }}</div>
-        }
+      <div class="absolute inset-0 -z-10 pointer-events-none anim-fade-in">
+        <div class="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-primary/10 blur-3xl"></div>
+        <div class="absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-primary/10 blur-3xl"></div>
+      </div>
 
-        <form (ngSubmit)="onSubmit()" class="space-y-4">
-          <input
-            [(ngModel)]="email" name="email" type="email" required
-            placeholder="Email"
-            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-          >
-          <input
-            [(ngModel)]="password" name="password" type="password" required
-            placeholder="Contraseña"
-            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-          >
-          <button type="submit" [disabled]="loading"
-            class="w-full bg-emerald-600 text-white py-2 rounded-lg hover:bg-emerald-700 transition disabled:opacity-50">
-            {{ loading ? 'Ingresando...' : 'Ingresar' }}
-          </button>
-        </form>
+      <div class="w-full max-w-md">
+        <div class="mb-8 text-center anim-fade-up">
+          <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/30 mb-4 anim-zoom-in">
+            <app-icon name="chef-hat" [size]="34" />
+          </div>
+          <h1 class="text-2xl font-bold text-foreground">YesChef</h1>
+          <p class="text-muted-foreground text-sm mt-1">Acceso del personal</p>
+        </div>
 
-        <p class="text-center text-sm text-gray-500 mt-4">
-          ¿No tenés cuenta?
-          <a routerLink="/auth/register" class="text-emerald-600 hover:underline">Registrate</a>
+        <div class="bg-card rounded-2xl border border-border p-6 sm:p-8 shadow-sm anim-fade-up" style="animation-delay: 100ms">
+          @if (error) {
+            <div class="bg-destructive/10 text-destructive px-4 py-3 rounded-xl mb-5 text-sm anim-fade-in">{{ error }}</div>
+          }
+
+          <form (ngSubmit)="onSubmit()" class="space-y-4">
+            <div>
+              <label for="email" class="block text-sm font-medium text-foreground mb-1.5">Email</label>
+              <div class="relative">
+                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground">
+                  <app-icon name="mail" [size]="18" />
+                </span>
+                <input
+                  id="email" type="email" [(ngModel)]="email" name="email" required
+                  placeholder="tu@email.com"
+                  class="w-full pl-11 pr-4 py-2.5 border border-border rounded-xl bg-background placeholder:text-muted-foreground/60 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition"
+                >
+              </div>
+            </div>
+
+            <div>
+              <label for="password" class="block text-sm font-medium text-foreground mb-1.5">Contraseña</label>
+              <div class="relative">
+                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground">
+                  <app-icon name="lock" [size]="18" />
+                </span>
+                <input
+                  id="password" type="password" [(ngModel)]="password" name="password" required
+                  placeholder="••••••••"
+                  class="w-full pl-11 pr-4 py-2.5 border border-border rounded-xl bg-background placeholder:text-muted-foreground/60 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition"
+                >
+              </div>
+            </div>
+
+            <button type="submit" [disabled]="loading"
+              class="w-full bg-primary text-primary-foreground py-2.5 rounded-xl font-semibold hover:bg-primary/90 active:scale-[0.99] transition disabled:opacity-50 disabled:pointer-events-none shadow-md shadow-primary/20">
+              {{ loading ? 'Ingresando...' : 'Ingresar' }}
+            </button>
+          </form>
+        </div>
+
+        <p class="text-center text-xs text-muted-foreground mt-6">
+          Este acceso es exclusivo para el personal del restaurante.
         </p>
       </div>
     </div>

@@ -15,6 +15,13 @@ export interface RegisterRequest {
   email: string;
   password: string;
   fullName: string | null;
+}
+
+export interface CreateStaffRequest {
+  username: string;
+  email: string;
+  password: string;
+  fullName: string | null;
   roleId: string;
 }
 
