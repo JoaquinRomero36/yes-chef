@@ -5,7 +5,7 @@ services:
     environment:
       POSTGRES_DB: yeschef
       POSTGRES_USER: yeschef_admin
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-yeschef_secret_2024}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -26,8 +26,8 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__Default: Host=postgres;Port=5432;Database=yeschef;Username=yeschef_admin;Password=${DB_PASSWORD:-yeschef_secret_2024}
-      Jwt__Key: ${JWT_KEY:-SuperSecretKeyForYesChefApp2024!}
+      ConnectionStrings__Default: Host=postgres;Port=5432;Database=yeschef;Username=yeschef_admin;Password=${DB_PASSWORD}
+      Jwt__Key: ${JWT_KEY}
       Jwt__Issuer: YesChef.Api
       Jwt__Audience: YesChef.App
     depends_on:

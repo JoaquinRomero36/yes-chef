@@ -1,7 +1,13 @@
 {
-  "/api/*": {
+  "/api": {
     "target": "http://localhost:5230",
     "secure": false,
+    "logLevel": "debug"
+  },
+  "/hubs": {
+    "target": "http://localhost:5230",
+    "secure": false,
+    "ws": true,
     "logLevel": "debug"
   }
 }
