@@ -72,3 +72,6 @@ menu-snapshot.txt
 # ─── Database ──────────────────────────────────────────────────
 *.sqlite
 *.sqlite3
+
+# ─── Capturas de verificación en la raíz ────────────────────────
+/*.png
