@@ -79,6 +79,9 @@ interface CategoryWithProducts extends Category {
         <div class="fixed inset-0 overflow-y-auto bg-background z-10 anim-fade-in">
           <div class="flex min-h-full items-center justify-center p-4">
             <div class="w-full max-w-sm anim-fade-up">
+              @if (sent) {
+                <div class="bg-primary/10 text-primary border border-primary/20 px-4 py-3 rounded-lg mb-4">¡Pedido enviado! Podés hacer otro pedido.</div>
+              }
               <h2 class="text-lg font-semibold text-muted-foreground mb-6 text-center">¿Cómo querés pedir?</h2>
               <div class="w-full space-y-3">
                 <button (click)="selectType('dine-in')" class="w-full text-left bg-card rounded-xl p-4 border border-border hover:border-primary transition flex items-start gap-3 anim-fade-up" style="animation-delay: 60ms">
@@ -457,6 +460,7 @@ export class MenuComponent implements OnInit, OnDestroy {
   }
 
   selectType(type: 'dine-in' | 'takeaway' | 'delivery') {
+    this.sent = false;
     this.orderType = type;
     this.paymentMethod = null;
     this.filterProducts();
@@ -526,6 +530,13 @@ export class MenuComponent implements OnInit, OnDestroy {
         this.cart = [];
         this.notes = '';
         this.paymentMethod = null;
+        this.orderType = 'dine-in';
+        this.tableNumber = null;
+        this.contactName = '';
+        this.contactPhone = '';
+        this.deliveryAddress = '';
+        this.step = 'type';
+        this.view = 'menu';
         this.sending = false;
       },
       error: (err) => {
