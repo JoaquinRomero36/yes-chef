@@ -148,7 +148,16 @@ export class KitchenComponent implements OnInit, OnDestroy {
   }
 
   updateStatus(id: string, status: string) {
-    this.orderService.updateStatus(id, status).subscribe();
+    this.orderService.updateStatus(id, status).subscribe(updated => {
+      const idx = this.orders.findIndex(o => o.id === updated.id);
+      if (idx >= 0) {
+        if (updated.status === 'delivered' || updated.status === 'cancelled') {
+          this.orders = this.orders.filter(o => o.id !== updated.id);
+        } else {
+          this.orders[idx] = updated;
+        }
+      }
+    });
   }
 
   statusClass(s: string): string {
