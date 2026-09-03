@@ -211,6 +211,9 @@ public class OrdersController : ControllerBase
             && !allowedTransitions[order.Status].Contains(request.Status))
             return BadRequest(new { message = $"No se puede pasar de '{order.Status}' a '{request.Status}'" });
 
+        if (request.Status == "cancelled" && order.PaidAt is not null)
+            return BadRequest(new { message = "Un pedido ya cobrado no se puede cancelar. Revisá el cobro en caja." });
+
         order.Status = request.Status;
         order.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
@@ -238,8 +241,8 @@ public class OrdersController : ControllerBase
 
         if (order is null) return NotFound();
 
-        if (order.Status == "cancelled")
-            return BadRequest(new { message = "No se puede cobrar un pedido cancelado" });
+        if (order.Status != "delivered")
+            return BadRequest(new { message = "Solo se puede cobrar un pedido entregado" });
 
         if (order.PaidAt is not null)
             return Conflict(new { message = "Este pedido ya está pagado" });

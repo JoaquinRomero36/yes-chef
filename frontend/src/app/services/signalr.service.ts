@@ -2,6 +2,7 @@ import { Injectable, OnDestroy } from '@angular/core';
 import * as signalR from '@microsoft/signalr';
 import { Subject } from 'rxjs';
 import { OrderResponse } from '../models/order.models';
+import { AuthService } from './auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class SignalRService implements OnDestroy {
@@ -10,11 +11,15 @@ export class SignalRService implements OnDestroy {
   newOrder$ = new Subject<OrderResponse>();
   orderUpdated$ = new Subject<OrderResponse>();
 
+  constructor(private auth: AuthService) {}
+
   start() {
     if (this.connection?.state === signalR.HubConnectionState.Connected) return;
 
     this.connection = new signalR.HubConnectionBuilder()
-      .withUrl('/hubs/orders')
+      .withUrl('/hubs/orders', {
+        accessTokenFactory: () => this.auth.getToken() || ''
+      })
       .withAutomaticReconnect()
       .build();
 
