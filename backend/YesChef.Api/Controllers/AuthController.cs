@@ -11,7 +11,6 @@ namespace YesChef.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[AllowAnonymous]
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
@@ -26,6 +25,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
+    [AllowAnonymous]
     [EnableRateLimiting("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
@@ -41,6 +41,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
+    [AllowAnonymous]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
         try
@@ -102,6 +103,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpGet("setup-status")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetSetupStatus()
     {
         var userCount = await _context.Users.CountAsync();
@@ -109,6 +111,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpGet("roles")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetRoles()
     {
         var roles = await _roleRepo.GetAllAsync();
