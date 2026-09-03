@@ -29,28 +29,43 @@ public class ReportsController : ControllerBase
         var day = UtcDay(date, DateTime.UtcNow);
         var nextDay = day.AddDays(1);
 
-        var orders = await _context.Orders
+        var baseQuery = _context.Orders
+            .AsNoTracking()
+            .Where(o => o.CreatedAt >= day && o.CreatedAt < nextDay
+                     && o.Status != "cancelled");
+
+        var totalOrders = await baseQuery.CountAsync();
+        var totalRevenue = await baseQuery.SumAsync(o => o.Total);
+        var totalDeliveryFee = await baseQuery.SumAsync(o => o.DeliveryFee);
+        var dineInCount = await baseQuery.CountAsync(o => o.OrderType == "dine-in");
+        var takeawayCount = await baseQuery.CountAsync(o => o.OrderType == "takeaway");
+        var deliveryCount = await baseQuery.CountAsync(o => o.OrderType == "delivery");
+
+        var byHour = await _context.Orders
+            .AsNoTracking()
             .Where(o => o.CreatedAt >= day && o.CreatedAt < nextDay
                      && o.Status != "cancelled")
+            .GroupBy(o => o.CreatedAt.Hour)
+            .Select(g => new HourlySales(
+                g.Key,
+                g.Count(),
+                g.Sum(o => o.Total)))
             .ToListAsync();
 
         var hourly = Enumerable.Range(8, 14)
-            .Select(h => new HourlySales(
-                h,
-                orders.Count(o => o.CreatedAt.Hour == h),
-                orders.Where(o => o.CreatedAt.Hour == h)
-                      .Sum(o => o.Total)
-            )).Where(h => h.Orders > 0 || h.Revenue > 0)
+            .Select(h => byHour.FirstOrDefault(x => x.Hour == h)
+                ?? new HourlySales(h, 0, 0))
+            .Where(h => h.Orders > 0 || h.Revenue > 0)
             .ToList();
 
         return Ok(new DailySalesResponse(
             day.ToString("yyyy-MM-dd"),
-            orders.Count,
-            orders.Sum(o => o.Total),
-            orders.Sum(o => o.DeliveryFee),
-            orders.Count(o => o.OrderType == "dine-in"),
-            orders.Count(o => o.OrderType == "takeaway"),
-            orders.Count(o => o.OrderType == "delivery"),
+            totalOrders,
+            totalRevenue,
+            totalDeliveryFee,
+            dineInCount,
+            takeawayCount,
+            deliveryCount,
             hourly
         ));
     }
@@ -62,6 +77,7 @@ public class ReportsController : ControllerBase
         var toDate = UtcDay(to, DateTime.UtcNow.AddDays(1));
 
         var items = await _context.OrderItems
+            .AsNoTracking()
             .Include(i => i.Order)
             .Where(i => i.Order.CreatedAt >= fromDate
                      && i.Order.CreatedAt < toDate
@@ -87,13 +103,18 @@ public class ReportsController : ControllerBase
         var fromDate = UtcDay(from, DateTime.UtcNow.AddDays(-30));
         var toDate = UtcDay(to, DateTime.UtcNow.AddDays(1));
 
-        var orders = await _context.Orders
+        var baseQuery = _context.Orders
+            .AsNoTracking()
             .Where(o => o.CreatedAt >= fromDate
                      && o.CreatedAt < toDate
-                     && o.Status != "cancelled")
-            .ToListAsync();
+                     && o.Status != "cancelled");
+
+        var totalOrders = await baseQuery.CountAsync();
+        var totalRevenue = await baseQuery.SumAsync(o => o.Total);
+        var average = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
         var topProduct = await _context.OrderItems
+            .AsNoTracking()
             .Include(i => i.Order)
             .Where(i => i.Order.CreatedAt >= fromDate
                      && i.Order.CreatedAt < toDate
@@ -105,9 +126,9 @@ public class ReportsController : ControllerBase
 
         return Ok(new SummaryResponse(
             fromDate, toDate,
-            orders.Count,
-            orders.Sum(o => o.Total),
-            orders.Count > 0 ? orders.Average(o => o.Total) : 0,
+            totalOrders,
+            totalRevenue,
+            average,
             topProduct?.Name ?? "-",
             topProduct?.Qty ?? 0
         ));

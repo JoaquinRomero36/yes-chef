@@ -2,11 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { OrderService } from '../../../services/order.service';
 import { OrderResponse } from '../../../models/order.models';
-
-interface PaymentOption {
-  value: string;
-  label: string;
-}
+import { PAYMENT_METHODS, paymentMethodLabel } from '../../../constants/payment-methods';
 
 @Component({
   selector: 'app-orders',
@@ -97,13 +93,7 @@ export class OrdersComponent implements OnInit {
   payingId: string | null = null;
   payError: string | null = null;
 
-  paymentOptions: PaymentOption[] = [
-    { value: 'cash', label: 'Efectivo' },
-    { value: 'debit', label: 'Débito' },
-    { value: 'credit', label: 'Crédito' },
-    { value: 'mercado_pago', label: 'Mercado Pago' },
-    { value: 'voucher', label: 'Vale / Cuenta' }
-  ];
+  paymentOptions = PAYMENT_METHODS;
 
   constructor(private orderService: OrderService) {}
 
@@ -130,8 +120,7 @@ export class OrdersComponent implements OnInit {
   }
 
   methodLabel(method: string): string {
-    const found = this.paymentOptions.find(p => p.value === method);
-    return found ? found.label : method;
+    return paymentMethodLabel(method);
   }
 
   payOrder(o: OrderResponse, method: string) {

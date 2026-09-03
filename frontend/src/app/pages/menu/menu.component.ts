@@ -4,6 +4,7 @@ import { CategoryService } from '../../services/category.service';
 import { ProductService } from '../../services/product.service';
 import { OrderService } from '../../services/order.service';
 import { PaymentMethod } from '../../models/order.models';
+import { PAYMENT_METHODS, PAYMENT_METHODS_DELIVERY } from '../../constants/payment-methods';
 import { Category } from '../../models/category.models';
 import { Product } from '../../models/product.models';
 import { ThemeToggleComponent } from '../../components/theme-toggle/theme-toggle.component';
@@ -315,18 +316,9 @@ export class MenuComponent implements OnInit, OnDestroy {
   view: 'menu' | 'cart' = 'menu';
   orderType: 'dine-in' | 'takeaway' | 'delivery' = 'dine-in';
   paymentMethod: PaymentMethod | null = null;
-  private allPaymentMethods: { value: PaymentMethod; label: string }[] = [
-    { value: 'cash', label: 'Efectivo' },
-    { value: 'debit', label: 'Débito' },
-    { value: 'credit', label: 'Crédito' },
-    { value: 'mercado_pago', label: 'Mercado Pago' },
-    { value: 'voucher', label: 'Vale / Cuenta' }
-  ];
 
   get paymentMethods(): { value: PaymentMethod; label: string }[] {
-    return this.orderType === 'delivery'
-      ? this.allPaymentMethods.filter(m => m.value !== 'cash')
-      : this.allPaymentMethods;
+    return this.orderType === 'delivery' ? PAYMENT_METHODS_DELIVERY : PAYMENT_METHODS;
   }
 
   tableInput: number | null = null;

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using YesChef.Api.Hubs;
+using YesChef.Core;
 using YesChef.Core.DTOs;
 using YesChef.Core.Entities;
 using YesChef.Infrastructure.Data;
@@ -33,14 +34,13 @@ public class OrdersController : ControllerBase
         if (!validTypes.Contains(request.OrderType))
             return BadRequest(new { message = "Tipo de pedido inválido. Use: dine-in, takeaway, delivery" });
 
-        var validPayments = new[] { "cash", "debit", "credit", "mercado_pago", "voucher" };
-        if (request.PaymentMethod is not null && !validPayments.Contains(request.PaymentMethod.ToLowerInvariant()))
+        if (request.PaymentMethod is not null && !PaymentMethods.IsValid(request.PaymentMethod))
             return BadRequest(new { message = "Método de pago inválido. Use: cash, debit, credit, mercado_pago, voucher" });
 
         if (request.OrderType == "delivery" && string.IsNullOrWhiteSpace(request.PaymentMethod))
             return BadRequest(new { message = "Para delivery el pago debe registrarse al hacer el pedido" });
 
-        if (request.OrderType == "delivery" && request.PaymentMethod?.ToLowerInvariant() == "cash")
+        if (request.OrderType == "delivery" && PaymentMethods.Normalize(request.PaymentMethod) == "cash")
             return BadRequest(new { message = "El delivery no se puede pagar en efectivo en el local" });
 
         foreach (var item in request.Items)
@@ -116,7 +116,7 @@ public class OrdersController : ControllerBase
             DeliveryFee = deliveryFee,
             Notes = request.Notes,
             Status = "pending",
-            PaymentMethod = request.PaymentMethod?.ToLowerInvariant(),
+            PaymentMethod = PaymentMethods.Normalize(request.PaymentMethod),
             PaidAt = request.PaymentMethod is null ? null : DateTime.UtcNow
         };
 
@@ -148,36 +148,57 @@ public class OrdersController : ControllerBase
 
     [HttpGet("active")]
     [Authorize(Roles = "admin,waiter,kitchen")]
-    public async Task<IActionResult> GetActive([FromQuery] string? type)
+    public async Task<IActionResult> GetActive([FromQuery] string? type, [FromQuery] int page = 1, [FromQuery] int pageSize = 50)
     {
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+
         var query = _context.Orders
+            .AsNoTracking()
             .Include(o => o.Table)
             .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.Product)
-            .Where(o => o.Status != "delivered" && o.Status != "cancelled")
-            .AsQueryable();
+            .Where(o => o.Status != "delivered" && o.Status != "cancelled");
 
         if (!string.IsNullOrEmpty(type))
             query = query.Where(o => o.OrderType == type);
 
+        var total = await query.CountAsync();
+
         var orders = await query
             .OrderByDescending(o => o.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
+
+        Response.Headers["X-Total-Count"] = total.ToString();
 
         return Ok(orders.Select(o => BuildResponse(o)));
     }
 
     [HttpGet("cashable")]
     [Authorize(Roles = "admin,waiter,kitchen")]
-    public async Task<IActionResult> GetCashable()
+    public async Task<IActionResult> GetCashable([FromQuery] int page = 1, [FromQuery] int pageSize = 50)
     {
-        var orders = await _context.Orders
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+
+        var query = _context.Orders
+            .AsNoTracking()
             .Include(o => o.Table)
             .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.Product)
-            .Where(o => o.Status == "delivered" && o.Status != "cancelled")
+            .Where(o => o.Status == "delivered");
+
+        var total = await query.CountAsync();
+
+        var orders = await query
             .OrderByDescending(o => o.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
+
+        Response.Headers["X-Total-Count"] = total.ToString();
 
         return Ok(orders.Select(o => BuildResponse(o)));
     }
@@ -229,8 +250,7 @@ public class OrdersController : ControllerBase
     [Authorize(Roles = "admin,waiter,kitchen")]
     public async Task<IActionResult> Pay(Guid id, [FromBody] PayOrderRequest request)
     {
-        var validPayments = new[] { "cash", "debit", "credit", "mercado_pago", "voucher" };
-        if (request.PaymentMethod is null || !validPayments.Contains(request.PaymentMethod.ToLowerInvariant()))
+        if (request.PaymentMethod is null || !PaymentMethods.IsValid(request.PaymentMethod))
             return BadRequest(new { message = "Método de pago inválido. Use: cash, debit, credit, mercado_pago, voucher" });
 
         var order = await _context.Orders
@@ -247,10 +267,11 @@ public class OrdersController : ControllerBase
         if (order.PaidAt is not null)
             return Conflict(new { message = "Este pedido ya está pagado" });
 
-        if (order.OrderType == "delivery" && request.PaymentMethod.ToLowerInvariant() == "cash")
+        var normalizedMethod = PaymentMethods.Normalize(request.PaymentMethod)!;
+        if (order.OrderType == "delivery" && normalizedMethod == "cash")
             return BadRequest(new { message = "El delivery no se puede cobrar en efectivo en el local" });
 
-        order.PaymentMethod = request.PaymentMethod.ToLowerInvariant();
+        order.PaymentMethod = normalizedMethod;
         order.PaidAt = DateTime.UtcNow;
         order.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();

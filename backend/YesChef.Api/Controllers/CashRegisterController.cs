@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using YesChef.Core;
 using YesChef.Core.DTOs;
 using YesChef.Core.Entities;
 using YesChef.Infrastructure.Data;
@@ -19,18 +20,9 @@ public class CashRegisterController : ControllerBase
         _context = context;
     }
 
-    private static readonly Dictionary<string, string> PaymentLabels = new()
-    {
-        ["cash"] = "Efectivo",
-        ["debit"] = "Débito",
-        ["credit"] = "Crédito",
-        ["mercado_pago"] = "Mercado Pago",
-        ["voucher"] = "Vale / Cuenta"
-    };
-
     private static List<PaymentMethodSales> BuildBreakdown(IEnumerable<IGrouping<string?, Order>> groups)
     {
-        return PaymentLabels
+        return PaymentMethods.AllLabels
             .Where(kvp => groups.Any(g => g.Key == kvp.Key))
             .Select(kvp => new PaymentMethodSales(
                 kvp.Key,
@@ -48,6 +40,7 @@ public class CashRegisterController : ControllerBase
     public async Task<IActionResult> GetStatus()
     {
         var active = await _context.Set<CashRegister>()
+            .AsNoTracking()
             .Where(c => c.Status == "open")
             .OrderByDescending(c => c.OpenedAt)
             .FirstOrDefaultAsync();
@@ -56,6 +49,7 @@ public class CashRegisterController : ControllerBase
             return Ok(new { status = "closed", message = "Caja cerrada" });
 
         var todayOrders = await _context.Orders
+            .AsNoTracking()
             .Where(o => o.CreatedAt >= active.OpenedAt
                      && o.Status != "cancelled"
                      && o.PaidAt != null)
