@@ -1,5 +1,7 @@
 import { PaymentMethod } from '../models/order.models';
 
+export const DELIVERY_FEE = 1500;
+
 export interface PaymentOption {
   value: PaymentMethod;
   label: string;

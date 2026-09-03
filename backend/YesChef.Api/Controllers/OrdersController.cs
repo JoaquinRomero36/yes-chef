@@ -104,7 +104,7 @@ public class OrdersController : ControllerBase
                 return BadRequest(new { message = $"'{product.Name}' solo se puede consumir en el local" });
         }
 
-        var deliveryFee = request.OrderType == "delivery" ? 1500m : 0m;
+        var deliveryFee = request.OrderType == "delivery" ? Business.DeliveryFee : 0m;
 
         var order = new Order
         {

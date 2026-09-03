@@ -62,6 +62,9 @@ public class ProductsController : ControllerBase
     [Authorize(Roles = "admin")]
     public async Task<IActionResult> Create([FromBody] CreateProductRequest request)
     {
+        if (string.IsNullOrWhiteSpace(request.Name))
+            return BadRequest(new { message = "El nombre del producto es obligatorio" });
+
         var category = await _context.Categories.FindAsync(request.CategoryId);
         if (category is null)
             return BadRequest(new { message = "La categoría no existe" });
@@ -98,6 +101,9 @@ public class ProductsController : ControllerBase
     [Authorize(Roles = "admin")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateProductRequest request)
     {
+        if (string.IsNullOrWhiteSpace(request.Name))
+            return BadRequest(new { message = "El nombre del producto es obligatorio" });
+
         var product = await _context.Products.FindAsync(id);
         if (product is null) return NotFound();
 
@@ -112,6 +118,13 @@ public class ProductsController : ControllerBase
             .AnyAsync(p => p.Name.ToLower() == request.Name.ToLower() && p.IsActive && p.Id != id);
         if (duplicado)
             return BadRequest(new { message = $"Ya existe un producto llamado '{request.Name}'" });
+
+        if (request.IsActive == false)
+        {
+            var activos = await _context.Products.CountAsync(p => p.IsActive && p.Id != id);
+            if (activos == 0)
+                return BadRequest(new { message = "No se puede desactivar el último producto activo del menú" });
+        }
 
         product.Name = request.Name;
         product.Description = request.Description;
@@ -133,6 +146,10 @@ public class ProductsController : ControllerBase
     {
         var product = await _context.Products.FindAsync(id);
         if (product is null) return NotFound();
+
+        var activos = await _context.Products.CountAsync(p => p.IsActive && p.Id != id);
+        if (activos == 0)
+            return BadRequest(new { message = "No se puede desactivar el último producto activo del menú" });
 
         product.IsActive = false;
         product.UpdatedAt = DateTime.UtcNow;

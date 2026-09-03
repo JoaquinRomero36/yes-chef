@@ -46,6 +46,9 @@ public class CategoriesController : ControllerBase
     [Authorize(Roles = "admin")]
     public async Task<IActionResult> Create([FromBody] CreateCategoryRequest request)
     {
+        if (string.IsNullOrWhiteSpace(request.Name))
+            return BadRequest(new { message = "El nombre de la categoría es obligatorio" });
+
         var duplicado = await _context.Categories
             .AnyAsync(c => c.Name.ToLower() == request.Name.ToLower() && c.IsActive);
         if (duplicado)
@@ -69,8 +72,18 @@ public class CategoriesController : ControllerBase
     [Authorize(Roles = "admin")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCategoryRequest request)
     {
+        if (string.IsNullOrWhiteSpace(request.Name))
+            return BadRequest(new { message = "El nombre de la categoría es obligatorio" });
+
         var category = await _context.Categories.FindAsync(id);
         if (category is null) return NotFound();
+
+        if (request.IsActive == false)
+        {
+            var activas = await _context.Categories.CountAsync(c => c.IsActive && c.Id != id);
+            if (activas == 0)
+                return BadRequest(new { message = "No se puede desactivar la última categoría activa del menú" });
+        }
 
         var duplicado = await _context.Categories
             .AnyAsync(c => c.Name.ToLower() == request.Name.ToLower() && c.IsActive && c.Id != id);
@@ -93,6 +106,10 @@ public class CategoriesController : ControllerBase
     {
         var category = await _context.Categories.FindAsync(id);
         if (category is null) return NotFound();
+
+        var activas = await _context.Categories.CountAsync(c => c.IsActive && c.Id != id);
+        if (activas == 0)
+            return BadRequest(new { message = "No se puede desactivar la última categoría activa del menú" });
 
         category.IsActive = false;
         category.UpdatedAt = DateTime.UtcNow;

@@ -4,7 +4,7 @@ import { CategoryService } from '../../services/category.service';
 import { ProductService } from '../../services/product.service';
 import { OrderService } from '../../services/order.service';
 import { PaymentMethod } from '../../models/order.models';
-import { PAYMENT_METHODS, PAYMENT_METHODS_DELIVERY } from '../../constants/payment-methods';
+import { PAYMENT_METHODS, PAYMENT_METHODS_DELIVERY, DELIVERY_FEE } from '../../constants/payment-methods';
 import { Category } from '../../models/category.models';
 import { Product } from '../../models/product.models';
 import { ThemeToggleComponent } from '../../components/theme-toggle/theme-toggle.component';
@@ -496,7 +496,7 @@ export class MenuComponent implements OnInit, OnDestroy {
   }
 
   cartTotal(): number {
-    const deliveryFee = this.orderType === 'delivery' ? 1500 : 0;
+    const deliveryFee = this.orderType === 'delivery' ? DELIVERY_FEE : 0;
     return this.subtotal() + deliveryFee;
   }
 
