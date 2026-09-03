@@ -54,7 +54,7 @@ public class AuthService : IAuthService
         {
             Username = normalizedUsername,
             Email = normalizedEmail,
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password, 12),
             FullName = fullName,
             RoleId = roleId,
             IsActive = true
