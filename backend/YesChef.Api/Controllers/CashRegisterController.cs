@@ -91,6 +91,9 @@ public class CashRegisterController : ControllerBase
         if (register is null)
             return BadRequest(new { message = "No hay caja abierta" });
 
+        if (request.ClosingBalance < 0)
+            return BadRequest(new { message = "El total en caja no puede ser negativo" });
+
         // Ventas del turno derivadas de los pedidos, agrupadas por método de pago.
         var sales = await _context.Orders
             .Where(o => o.CreatedAt >= register.OpenedAt
