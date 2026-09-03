@@ -32,7 +32,7 @@ import { IconComponent } from '../../components/icon/icon.component';
                 <app-icon name="chef-hat" [size]="18" /> Cocina
               </a>
               <a routerLink="/dashboard/orders" (click)="sidebarOpen.set(false)" routerLinkActive="bg-sidebar-accent text-sidebar-accent-foreground" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-sidebar-accent/60 transition">
-                <app-icon name="banknote" [size]="18" /> Pedidos
+                <app-icon name="cart" [size]="18" /> Pedidos
               </a>
               @if (auth.getRole() !== 'kitchen') {
                 <a routerLink="/dashboard/reports" (click)="sidebarOpen.set(false)" routerLinkActive="bg-sidebar-accent text-sidebar-accent-foreground" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-sidebar-accent/60 transition">
@@ -65,7 +65,7 @@ import { IconComponent } from '../../components/icon/icon.component';
                 <app-icon name="chef-hat" [size]="18" /> Cocina
               </a>
               <a routerLink="/dashboard/orders" routerLinkActive="bg-sidebar-accent text-sidebar-accent-foreground" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-sidebar-accent/60 transition">
-                <app-icon name="banknote" [size]="18" /> Pedidos
+                <app-icon name="cart" [size]="18" /> Pedidos
               </a>
               @if (auth.getRole() !== 'kitchen') {
                 <a routerLink="/dashboard/reports" routerLinkActive="bg-sidebar-accent text-sidebar-accent-foreground" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-sidebar-accent/60 transition">
