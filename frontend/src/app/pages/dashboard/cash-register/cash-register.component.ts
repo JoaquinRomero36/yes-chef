@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ReportsService, CashRegisterStatus } from '../../../services/reports.service';
@@ -73,7 +73,7 @@ import { ReportsService, CashRegisterStatus } from '../../../services/reports.se
     </div>
   `
 })
-export class CashRegisterComponent implements OnInit {
+export class CashRegisterComponent implements OnInit, OnDestroy {
   status: CashRegisterStatus | null = null;
   loading = true;
 
@@ -88,10 +88,17 @@ export class CashRegisterComponent implements OnInit {
     notes: ''
   };
 
+  private poll: ReturnType<typeof setInterval> | null = null;
+
   constructor(private reports: ReportsService) {}
 
   ngOnInit() {
     this.loadStatus();
+    this.poll = setInterval(() => this.loadStatus(), 30000);
+  }
+
+  ngOnDestroy() {
+    if (this.poll) clearInterval(this.poll);
   }
 
   loadStatus() {
