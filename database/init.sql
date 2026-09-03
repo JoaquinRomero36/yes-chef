@@ -96,6 +96,7 @@ CREATE TABLE IF NOT EXISTS cash_registers (
     cash_sales DECIMAL(10,2),
     card_sales DECIMAL(10,2),
     transfer_sales DECIMAL(10,2),
+    payment_breakdown TEXT,
     notes TEXT,
     status VARCHAR(50) NOT NULL DEFAULT 'open',
     opened_by_user_id UUID REFERENCES users(id),

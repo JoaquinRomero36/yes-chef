@@ -26,6 +26,17 @@ import { ReportsService, CashRegisterStatus } from '../../../services/reports.se
             <p><span class="text-muted-foreground">Ventas del turno:</span> \${{ status!.todayOrders?.toFixed(2) }}</p>
           </div>
 
+          @if (status!.paymentBreakdown && status!.paymentBreakdown.length > 0) {
+            <div class="text-sm space-y-1 mb-2">
+              @for (m of status!.paymentBreakdown; track m.method) {
+                <p class="flex justify-between">
+                  <span class="text-muted-foreground">{{ m.label }}</span>
+                  <span class="font-medium">\${{ m.total.toFixed(2) }}</span>
+                </p>
+              }
+            </div>
+          }
+
           <details class="mt-4">
             <summary class="cursor-pointer text-primary font-medium text-sm">Cerrar caja</summary>
             <div class="mt-3 space-y-3">

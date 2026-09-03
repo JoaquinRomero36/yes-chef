@@ -22,4 +22,12 @@ export class OrderService {
   updateStatus(id: string, status: string): Observable<OrderResponse> {
     return this.http.patch<OrderResponse>(`${this.apiUrl}/${id}/status`, { status });
   }
+
+  getCashable(): Observable<OrderResponse[]> {
+    return this.http.get<OrderResponse[]>(`${this.apiUrl}/cashable`);
+  }
+
+  pay(id: string, paymentMethod: string): Observable<OrderResponse> {
+    return this.http.patch<OrderResponse>(`${this.apiUrl}/${id}/pay`, { paymentMethod });
+  }
 }

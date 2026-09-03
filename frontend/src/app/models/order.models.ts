@@ -9,7 +9,7 @@ export interface CreateOrderRequest {
   items: CreateOrderItemRequest[];
 }
 
-export type PaymentMethod = 'cash' | 'card' | 'transfer';
+export type PaymentMethod = 'cash' | 'debit' | 'credit' | 'mercado_pago' | 'voucher';
 
 export interface CreateOrderItemRequest {
   productId: string;

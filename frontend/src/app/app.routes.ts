@@ -22,6 +22,10 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/dashboard/kitchen/kitchen.component').then(m => m.KitchenComponent)
       },
       {
+        path: 'orders',
+        loadComponent: () => import('./pages/dashboard/orders/orders.component').then(m => m.OrdersComponent)
+      },
+      {
         path: 'admin',
         loadComponent: () => import('./pages/dashboard/admin/admin.component').then(m => m.AdminComponent)
       },

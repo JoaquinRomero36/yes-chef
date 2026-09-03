@@ -266,19 +266,21 @@ interface CategoryWithProducts extends Category {
               <span>Total</span>
               <span>\${{ cartTotal().toFixed(2) }}</span>
             </div>
-            <div class="pt-2">
-              <p class="text-sm font-medium text-foreground mb-2">Método de pago</p>
-              <div class="flex gap-2">
-                @for (m of paymentMethods; track m.value) {
-                  <button type="button" (click)="paymentMethod = m.value"
-                    [class]="paymentMethod === m.value
-                      ? 'flex-1 border border-primary bg-primary/10 text-primary font-medium rounded-lg py-2 text-sm'
-                      : 'flex-1 border border-border rounded-lg py-2 text-sm text-muted-foreground hover:border-primary/50'">
-                    {{ m.label }}
-                  </button>
-                }
+            @if (orderType === 'delivery') {
+              <div class="pt-2">
+                <p class="text-sm font-medium text-foreground mb-2">Método de pago</p>
+                <div class="flex gap-2">
+                  @for (m of paymentMethods; track m.value) {
+                    <button type="button" (click)="paymentMethod = m.value"
+                      [class]="paymentMethod === m.value
+                        ? 'flex-1 border border-primary bg-primary/10 text-primary font-medium rounded-lg py-2 text-sm'
+                        : 'flex-1 border border-border rounded-lg py-2 text-sm text-muted-foreground hover:border-primary/50'">
+                      {{ m.label }}
+                    </button>
+                  }
+                </div>
               </div>
-            </div>
+            }
             <textarea [(ngModel)]="notes" placeholder="Notas para la cocina..." rows="2"
               class="w-full px-3 py-2 border border-border rounded-lg text-sm bg-card outline-none focus:ring-2 focus:ring-primary mt-2"></textarea>
             <div class="flex gap-2">
@@ -313,11 +315,19 @@ export class MenuComponent implements OnInit, OnDestroy {
   view: 'menu' | 'cart' = 'menu';
   orderType: 'dine-in' | 'takeaway' | 'delivery' = 'dine-in';
   paymentMethod: PaymentMethod | null = null;
-  paymentMethods: { value: PaymentMethod; label: string }[] = [
+  private allPaymentMethods: { value: PaymentMethod; label: string }[] = [
     { value: 'cash', label: 'Efectivo' },
-    { value: 'card', label: 'Tarjeta' },
-    { value: 'transfer', label: 'Transferencia' }
+    { value: 'debit', label: 'Débito' },
+    { value: 'credit', label: 'Crédito' },
+    { value: 'mercado_pago', label: 'Mercado Pago' },
+    { value: 'voucher', label: 'Vale / Cuenta' }
   ];
+
+  get paymentMethods(): { value: PaymentMethod; label: string }[] {
+    return this.orderType === 'delivery'
+      ? this.allPaymentMethods.filter(m => m.value !== 'cash')
+      : this.allPaymentMethods;
+  }
 
   tableInput: number | null = null;
   tableNumber: number | null = null;
@@ -456,6 +466,7 @@ export class MenuComponent implements OnInit, OnDestroy {
 
   selectType(type: 'dine-in' | 'takeaway' | 'delivery') {
     this.orderType = type;
+    this.paymentMethod = null;
     this.filterProducts();
     this.step = 'info';
   }
@@ -499,6 +510,7 @@ export class MenuComponent implements OnInit, OnDestroy {
 
   sendOrder() {
     if (this.cart.length === 0) return;
+    if (this.orderType === 'delivery' && !this.paymentMethod) return;
     this.sending = true;
     this.error = '';
     this.sent = false;

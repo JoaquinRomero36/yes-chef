@@ -30,6 +30,12 @@ export interface Summary {
   topProductQuantity: number;
 }
 
+export interface PaymentMethodSales {
+  method: string;
+  label: string;
+  total: number;
+}
+
 export interface CashRegisterStatus {
   status: string;
   message?: string;
@@ -38,6 +44,11 @@ export interface CashRegisterStatus {
   openingBalance?: number;
   notes?: string;
   todayOrders?: number;
+  paymentBreakdown?: PaymentMethodSales[];
+  cashSales?: number;
+  cardSales?: number;
+  transferSales?: number;
+  totalSales?: number;
 }
 
 @Injectable({ providedIn: 'root' })

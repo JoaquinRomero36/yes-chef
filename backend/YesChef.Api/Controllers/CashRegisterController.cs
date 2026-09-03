@@ -19,6 +19,31 @@ public class CashRegisterController : ControllerBase
         _context = context;
     }
 
+    private static readonly Dictionary<string, string> PaymentLabels = new()
+    {
+        ["cash"] = "Efectivo",
+        ["debit"] = "Débito",
+        ["credit"] = "Crédito",
+        ["mercado_pago"] = "Mercado Pago",
+        ["voucher"] = "Vale / Cuenta"
+    };
+
+    private static List<PaymentMethodSales> BuildBreakdown(IEnumerable<IGrouping<string?, Order>> groups)
+    {
+        return PaymentLabels
+            .Where(kvp => groups.Any(g => g.Key == kvp.Key))
+            .Select(kvp => new PaymentMethodSales(
+                kvp.Key,
+                kvp.Value,
+                groups.First(g => g.Key == kvp.Key).Sum(o => o.Total)))
+            .ToList();
+    }
+
+    private static decimal MethodTotal(List<IGrouping<string?, Order>> groups, string method)
+    {
+        return groups.FirstOrDefault(g => g.Key == method)?.Sum(o => o.Total) ?? 0m;
+    }
+
     [HttpGet("status")]
     public async Task<IActionResult> GetStatus()
     {
@@ -32,13 +57,20 @@ public class CashRegisterController : ControllerBase
 
         var todayOrders = await _context.Orders
             .Where(o => o.CreatedAt >= active.OpenedAt
-                     && o.Status != "cancelled")
+                     && o.Status != "cancelled"
+                     && o.PaidAt != null)
             .ToListAsync();
 
-        var cashSales = todayOrders.Where(o => o.PaymentMethod == "cash").Sum(o => o.Total);
-        var cardSales = todayOrders.Where(o => o.PaymentMethod == "card").Sum(o => o.Total);
-        var transferSales = todayOrders.Where(o => o.PaymentMethod == "transfer").Sum(o => o.Total);
-        var totalSales = cashSales + cardSales + transferSales;
+        var breakdown = todayOrders
+            .Where(o => o.PaymentMethod != null)
+            .GroupBy(o => o.PaymentMethod)
+            .ToList();
+
+        var cashSales = MethodTotal(breakdown, "cash");
+        var cardSales = MethodTotal(breakdown, "debit") + MethodTotal(breakdown, "credit");
+        var transferSales = MethodTotal(breakdown, "mercado_pago") + MethodTotal(breakdown, "voucher");
+        var totalSales = todayOrders.Where(o => o.PaymentMethod != null).Sum(o => o.Total);
+        var orderTotal = todayOrders.Sum(o => o.Total);
 
         return Ok(new
         {
@@ -47,11 +79,12 @@ public class CashRegisterController : ControllerBase
             active.OpenedAt,
             active.OpeningBalance,
             active.Notes,
-            todayOrders = todayOrders.Sum(o => o.Total),
+            todayOrders = orderTotal,
             cashSales,
             cardSales,
             transferSales,
-            totalSales
+            totalSales,
+            paymentBreakdown = BuildBreakdown(breakdown)
         });
     }
 
@@ -78,7 +111,7 @@ public class CashRegisterController : ControllerBase
         return Ok(new CashRegisterResponse(
             register.Id, register.OpenedAt, null,
             register.OpeningBalance, null, null, null, null, null,
-            register.Status, register.Notes
+            register.Status, register.Notes, null
         ));
     }
 
@@ -95,25 +128,24 @@ public class CashRegisterController : ControllerBase
             return BadRequest(new { message = "El total en caja no puede ser negativo" });
 
         // Ventas del turno derivadas de los pedidos, agrupadas por método de pago.
-        var sales = await _context.Orders
+        var breakdown = await _context.Orders
             .Where(o => o.CreatedAt >= register.OpenedAt
-                     && o.Status != "cancelled")
+                     && o.Status != "cancelled"
+                     && o.PaidAt != null)
             .GroupBy(o => o.PaymentMethod)
-            .Select(g => new { Method = g.Key, Total = g.Sum(o => o.Total) })
             .ToListAsync();
 
-        decimal MethodTotal(string? method) => sales.FirstOrDefault(s => s.Method == method)?.Total ?? 0m;
-
-        var cashSales = MethodTotal("cash");
-        var cardSales = MethodTotal("card");
-        var transferSales = MethodTotal("transfer");
-        var totalSales = cashSales + cardSales + transferSales;
+        decimal cashSales = MethodTotal(breakdown, "cash");
+        decimal cardSales = MethodTotal(breakdown, "debit") + MethodTotal(breakdown, "credit");
+        decimal transferSales = MethodTotal(breakdown, "mercado_pago") + MethodTotal(breakdown, "voucher");
+        var totalSales = breakdown.Sum(g => g.Sum(o => o.Total));
 
         register.ClosedAt = DateTime.UtcNow;
         register.ClosingBalance = request.ClosingBalance;
         register.CashSales = cashSales;
         register.CardSales = cardSales;
         register.TransferSales = transferSales;
+        register.PaymentBreakdown = System.Text.Json.JsonSerializer.Serialize(BuildBreakdown(breakdown));
         register.Notes = request.Notes;
         register.Status = "closed";
         register.UpdatedAt = DateTime.UtcNow;
@@ -124,7 +156,8 @@ public class CashRegisterController : ControllerBase
             register.Id, register.OpenedAt, register.ClosedAt,
             register.OpeningBalance, register.ClosingBalance,
             register.CashSales, register.CardSales, register.TransferSales,
-            totalSales, register.Status, register.Notes
+            totalSales, register.Status, register.Notes,
+            BuildBreakdown(breakdown)
         ));
     }
 }

@@ -9,6 +9,7 @@ public class CashRegister : BaseEntity
     public decimal? CashSales { get; set; }
     public decimal? CardSales { get; set; }
     public decimal? TransferSales { get; set; }
+    public string? PaymentBreakdown { get; set; }
     public string? Notes { get; set; }
     public string Status { get; set; } = "open";
     public Guid? OpenedByUserId { get; set; }

@@ -33,9 +33,15 @@ public class OrdersController : ControllerBase
         if (!validTypes.Contains(request.OrderType))
             return BadRequest(new { message = "Tipo de pedido inválido. Use: dine-in, takeaway, delivery" });
 
-        var validPayments = new[] { "cash", "card", "transfer" };
+        var validPayments = new[] { "cash", "debit", "credit", "mercado_pago", "voucher" };
         if (request.PaymentMethod is not null && !validPayments.Contains(request.PaymentMethod.ToLowerInvariant()))
-            return BadRequest(new { message = "Método de pago inválido. Use: cash, card, transfer" });
+            return BadRequest(new { message = "Método de pago inválido. Use: cash, debit, credit, mercado_pago, voucher" });
+
+        if (request.OrderType == "delivery" && string.IsNullOrWhiteSpace(request.PaymentMethod))
+            return BadRequest(new { message = "Para delivery el pago debe registrarse al hacer el pedido" });
+
+        if (request.OrderType == "delivery" && request.PaymentMethod?.ToLowerInvariant() == "cash")
+            return BadRequest(new { message = "El delivery no se puede pagar en efectivo en el local" });
 
         foreach (var item in request.Items)
         {
@@ -161,6 +167,21 @@ public class OrdersController : ControllerBase
         return Ok(orders.Select(o => BuildResponse(o)));
     }
 
+    [HttpGet("cashable")]
+    [Authorize(Roles = "admin,waiter,kitchen")]
+    public async Task<IActionResult> GetCashable()
+    {
+        var orders = await _context.Orders
+            .Include(o => o.Table)
+            .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Product)
+            .Where(o => o.Status == "delivered" && o.Status != "cancelled")
+            .OrderByDescending(o => o.CreatedAt)
+            .ToListAsync();
+
+        return Ok(orders.Select(o => BuildResponse(o)));
+    }
+
     [HttpPatch("{id:guid}/status")]
     [Authorize(Roles = "admin,waiter,kitchen")]
     public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateOrderStatusRequest request)
@@ -201,6 +222,43 @@ public class OrdersController : ControllerBase
         return Ok(response);
     }
 
+    [HttpPatch("{id:guid}/pay")]
+    [Authorize(Roles = "admin,waiter,kitchen")]
+    public async Task<IActionResult> Pay(Guid id, [FromBody] PayOrderRequest request)
+    {
+        var validPayments = new[] { "cash", "debit", "credit", "mercado_pago", "voucher" };
+        if (request.PaymentMethod is null || !validPayments.Contains(request.PaymentMethod.ToLowerInvariant()))
+            return BadRequest(new { message = "Método de pago inválido. Use: cash, debit, credit, mercado_pago, voucher" });
+
+        var order = await _context.Orders
+            .Include(o => o.Table)
+            .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Product)
+            .FirstOrDefaultAsync(o => o.Id == id);
+
+        if (order is null) return NotFound();
+
+        if (order.Status == "cancelled")
+            return BadRequest(new { message = "No se puede cobrar un pedido cancelado" });
+
+        if (order.PaidAt is not null)
+            return Conflict(new { message = "Este pedido ya está pagado" });
+
+        if (order.OrderType == "delivery" && request.PaymentMethod.ToLowerInvariant() == "cash")
+            return BadRequest(new { message = "El delivery no se puede cobrar en efectivo en el local" });
+
+        order.PaymentMethod = request.PaymentMethod.ToLowerInvariant();
+        order.PaidAt = DateTime.UtcNow;
+        order.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        var response = BuildResponse(order);
+
+        await _hub.Clients.Group("kitchen").SendAsync("OrderUpdated", response);
+
+        return Ok(response);
+    }
+
     private static OrderResponse BuildResponse(Order order, Dictionary<Guid, Product>? products = null)
     {
         return new OrderResponse(
@@ -227,3 +285,4 @@ public class OrdersController : ControllerBase
 }
 
 public record UpdateOrderStatusRequest(string Status);
+public record PayOrderRequest(string? PaymentMethod);
