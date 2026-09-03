@@ -46,6 +46,11 @@ public class CategoriesController : ControllerBase
     [Authorize(Roles = "admin")]
     public async Task<IActionResult> Create([FromBody] CreateCategoryRequest request)
     {
+        var duplicado = await _context.Categories
+            .AnyAsync(c => c.Name.ToLower() == request.Name.ToLower() && c.IsActive);
+        if (duplicado)
+            return BadRequest(new { message = $"Ya existe una categoría llamada '{request.Name}'" });
+
         var category = new Category
         {
             Name = request.Name,
@@ -66,6 +71,11 @@ public class CategoriesController : ControllerBase
     {
         var category = await _context.Categories.FindAsync(id);
         if (category is null) return NotFound();
+
+        var duplicado = await _context.Categories
+            .AnyAsync(c => c.Name.ToLower() == request.Name.ToLower() && c.IsActive && c.Id != id);
+        if (duplicado)
+            return BadRequest(new { message = $"Ya existe una categoría llamada '{request.Name}'" });
 
         category.Name = request.Name;
         category.Description = request.Description;

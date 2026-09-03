@@ -66,6 +66,14 @@ public class ProductsController : ControllerBase
         if (category is null)
             return BadRequest(new { message = "La categoría no existe" });
 
+        var duplicado = await _context.Products
+            .AnyAsync(p => p.Name.ToLower() == request.Name.ToLower() && p.IsActive);
+        if (duplicado)
+            return BadRequest(new { message = $"Ya existe un producto llamado '{request.Name}'" });
+
+        if (request.Price < 0)
+            return BadRequest(new { message = "El precio no puede ser negativo" });
+
         var product = new Product
         {
             Name = request.Name,
@@ -96,6 +104,14 @@ public class ProductsController : ControllerBase
         var category = await _context.Categories.FindAsync(request.CategoryId);
         if (category is null)
             return BadRequest(new { message = "La categoría no existe" });
+
+        if (request.Price < 0)
+            return BadRequest(new { message = "El precio no puede ser negativo" });
+
+        var duplicado = await _context.Products
+            .AnyAsync(p => p.Name.ToLower() == request.Name.ToLower() && p.IsActive && p.Id != id);
+        if (duplicado)
+            return BadRequest(new { message = $"Ya existe un producto llamado '{request.Name}'" });
 
         product.Name = request.Name;
         product.Description = request.Description;
