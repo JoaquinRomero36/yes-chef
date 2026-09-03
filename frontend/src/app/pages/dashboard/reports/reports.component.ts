@@ -63,26 +63,26 @@ import { IconComponent } from '../../../components/icon/icon.component';
         }
       }
 
-      @if (sort) {
+      @if (summary) {
         <section class="bg-card rounded-xl border border-border p-4 mb-6 anim-fade-up">
           <h2 class="font-semibold text-foreground mb-3">Resumen del período</h2>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <p class="text-sm text-muted-foreground">Pedidos</p>
-              <p class="text-xl font-bold">{{ sort.totalOrders }}</p>
+              <p class="text-xl font-bold">{{ summary.totalOrders }}</p>
             </div>
             <div>
               <p class="text-sm text-muted-foreground">Ingresos</p>
-              <p class="text-xl font-bold text-primary">\${{ sort.totalRevenue.toFixed(2) }}</p>
+              <p class="text-xl font-bold text-primary">\${{ summary.totalRevenue.toFixed(2) }}</p>
             </div>
             <div>
               <p class="text-sm text-muted-foreground">Ticket promedio</p>
-              <p class="text-xl font-bold">\${{ sort.averageOrderValue.toFixed(2) }}</p>
+              <p class="text-xl font-bold">\${{ summary.averageOrderValue.toFixed(2) }}</p>
             </div>
             <div>
               <p class="text-sm text-muted-foreground">Top producto</p>
-              <p class="text-xl font-bold text-amber-700">{{ sort.topProduct }}</p>
-              <p class="text-xs text-muted-foreground">{{ sort.topProductQuantity }} vendidos</p>
+              <p class="text-xl font-bold text-amber-700">{{ summary.topProduct }}</p>
+              <p class="text-xs text-muted-foreground">{{ summary.topProductQuantity }} vendidos</p>
             </div>
           </div>
         </section>
@@ -119,7 +119,7 @@ export class ReportsComponent implements OnInit {
   rangeTo = new Date().toISOString().slice(0, 10);
 
   daily: DailySales | null = null;
-  sort: Summary | null = null;
+  summary: Summary | null = null;
   topProducts: TopProduct[] = [];
 
   constructor(private reports: ReportsService) {}
@@ -134,7 +134,7 @@ export class ReportsComponent implements OnInit {
   }
 
   loadRange() {
-    this.reports.getSummary(this.rangeFrom, this.rangeTo).subscribe(s => this.sort = s);
+    this.reports.getSummary(this.rangeFrom, this.rangeTo).subscribe(s => this.summary = s);
     this.reports.getTopProducts(this.rangeFrom, this.rangeTo).subscribe(p => this.topProducts = p);
   }
 
