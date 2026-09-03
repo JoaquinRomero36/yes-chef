@@ -68,6 +68,14 @@ public class OrdersController : ControllerBase
                 await _context.SaveChangesAsync();
             }
             tableId = table.Id;
+
+            var mesaOcupada = await _context.Orders
+                .AnyAsync(o => o.TableId == tableId
+                    && o.Status != "delivered"
+                    && o.Status != "cancelled");
+
+            if (mesaOcupada)
+                return Conflict(new { message = $"La mesa {request.TableNumber.Value} ya tiene un pedido en curso" });
         }
 
         var productIds = request.Items.Select(i => i.ProductId).ToList();
@@ -77,6 +85,18 @@ public class OrdersController : ControllerBase
 
         if (products.Count != productIds.Count)
             return BadRequest(new { message = "Algún producto no existe" });
+
+        foreach (var item in request.Items)
+        {
+            if (!products.TryGetValue(item.ProductId, out var product))
+                return BadRequest(new { message = $"Producto {item.ProductId} no encontrado" });
+
+            if (!product.IsActive || !product.IsAvailable)
+                return BadRequest(new { message = $"'{product.Name}' no está disponible en este momento" });
+
+            if (request.OrderType != "dine-in" && !product.IsAvailableForAway)
+                return BadRequest(new { message = $"'{product.Name}' solo se puede consumir en el local" });
+        }
 
         var deliveryFee = request.OrderType == "delivery" ? 1500m : 0m;
 
@@ -96,8 +116,7 @@ public class OrdersController : ControllerBase
 
         foreach (var item in request.Items)
         {
-            if (!products.TryGetValue(item.ProductId, out var product))
-                return BadRequest(new { message = $"Producto {item.ProductId} no encontrado" });
+            var product = products[item.ProductId];
 
             order.OrderItems.Add(new OrderItem
             {
@@ -146,6 +165,10 @@ public class OrdersController : ControllerBase
     [Authorize(Roles = "admin,waiter,kitchen")]
     public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateOrderStatusRequest request)
     {
+        var validStatuses = new[] { "pending", "preparing", "ready", "delivered", "cancelled" };
+        if (!validStatuses.Contains(request.Status))
+            return BadRequest(new { message = "Estado inválido. Use: pending, preparing, ready, delivered, cancelled" });
+
         var order = await _context.Orders
             .Include(o => o.Table)
             .Include(o => o.OrderItems)
@@ -153,6 +176,19 @@ public class OrdersController : ControllerBase
             .FirstOrDefaultAsync(o => o.Id == id);
 
         if (order is null) return NotFound();
+
+        var allowedTransitions = new Dictionary<string, string[]>
+        {
+            ["pending"] = new[] { "preparing", "cancelled" },
+            ["preparing"] = new[] { "ready", "cancelled" },
+            ["ready"] = new[] { "delivered", "cancelled" },
+            ["delivered"] = Array.Empty<string>(),
+            ["cancelled"] = Array.Empty<string>()
+        };
+
+        if (order.Status != request.Status
+            && !allowedTransitions[order.Status].Contains(request.Status))
+            return BadRequest(new { message = $"No se puede pasar de '{order.Status}' a '{request.Status}'" });
 
         order.Status = request.Status;
         order.UpdatedAt = DateTime.UtcNow;
