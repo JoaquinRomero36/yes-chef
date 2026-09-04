@@ -35,10 +35,11 @@ export class SignalRService implements OnDestroy {
   }
 
   stop() {
-    if (this.connection) {
-      this.connection.invoke('LeaveKitchen');
-      this.connection.stop();
+    if (!this.connection) return;
+    if (this.connection.state === signalR.HubConnectionState.Connected) {
+      this.connection.invoke('LeaveKitchen').catch(() => {});
     }
+    this.connection.stop().catch(() => {});
   }
 
   ngOnDestroy() {
