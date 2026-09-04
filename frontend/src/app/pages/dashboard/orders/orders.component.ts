@@ -30,13 +30,20 @@ import { PAYMENT_METHODS, paymentMethodLabel } from '../../../constants/payment-
                   </p>
                   <p class="text-xs text-muted-foreground">{{ o.createdAt | date:'dd/MM HH:mm' }}</p>
                 </div>
+              <div class="flex items-center gap-2">
+                <span
+                  [class]="statusClass(o.status)"
+                  class="text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap">
+                  {{ statusLabel(o.status) }}
+                </span>
                 <span
                   [class]="o.paidAt
                     ? 'text-green-500 bg-green-500/10'
                     : 'text-amber-500 bg-amber-500/10'"
-                  class="text-xs px-2 py-1 rounded-full font-medium border border-current/20">
+                  class="text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap">
                   {{ o.paidAt ? 'Pagado' : 'Pendiente de cobro' }}
                 </span>
+              </div>
               </div>
 
               <div class="flex items-center justify-between">
@@ -121,6 +128,28 @@ export class OrdersComponent implements OnInit {
 
   methodLabel(method: string): string {
     return paymentMethodLabel(method);
+  }
+
+  statusLabel(s: string): string {
+    const map: Record<string, string> = {
+      pending: 'Pendiente',
+      preparing: 'En preparación',
+      ready: 'Listo',
+      delivered: 'Entregado',
+      cancelled: 'Cancelado'
+    };
+    return map[s] || s;
+  }
+
+  statusClass(s: string): string {
+    const map: Record<string, string> = {
+      pending: 'bg-amber-100 text-amber-800',
+      preparing: 'bg-blue-100 text-blue-800',
+      ready: 'bg-emerald-100 text-emerald-800',
+      delivered: 'bg-gray-100 text-gray-600',
+      cancelled: 'bg-red-100 text-red-800'
+    };
+    return map[s] || 'bg-gray-100 text-gray-600';
   }
 
   payOrder(o: OrderResponse, method: string) {
