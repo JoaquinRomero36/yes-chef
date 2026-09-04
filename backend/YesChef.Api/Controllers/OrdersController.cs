@@ -61,6 +61,18 @@ public class OrdersController : ControllerBase
         if (request.OrderType == "delivery" && string.IsNullOrWhiteSpace(request.DeliveryAddress))
             return BadRequest(new { message = "Para delivery necesitás una dirección" });
 
+        if ((request.OrderType == "takeaway" || request.OrderType == "delivery")
+            && string.IsNullOrWhiteSpace(request.ContactName))
+            return BadRequest(new { message = "Necesitás indicar tu nombre" });
+
+        if ((request.OrderType == "takeaway" || request.OrderType == "delivery")
+            && string.IsNullOrWhiteSpace(request.ContactPhone))
+            return BadRequest(new { message = "Necesitás indicar un número de teléfono" });
+
+        if (!string.IsNullOrWhiteSpace(request.ContactPhone)
+            && !EsTelefonoValido(request.ContactPhone))
+            return BadRequest(new { message = "El número de teléfono no es válido" });
+
         Guid? tableId = null;
         if (request.OrderType == "dine-in" && request.TableNumber.HasValue)
         {
@@ -176,6 +188,29 @@ public class OrdersController : ControllerBase
         return Ok(orders.Select(o => BuildResponse(o)));
     }
 
+    [HttpGet("tables")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetTables()
+    {
+        var tables = await _context.Tables
+            .AsNoTracking()
+            .ToListAsync();
+
+        var estados = tables
+            .GroupJoin(
+                await _context.Orders
+                    .AsNoTracking()
+                    .Where(o => o.Status != "delivered" && o.Status != "cancelled")
+                    .ToListAsync(),
+                t => t.Id,
+                o => o.TableId,
+                (t, orders) => new { t.Number, Ocupada = orders.Any() })
+            .Select(t => new { t.Number, t.Ocupada })
+            .ToList();
+
+        return Ok(estados);
+    }
+
     [HttpGet("cashable")]
     [Authorize(Roles = "admin,waiter,kitchen")]
     public async Task<IActionResult> GetCashable([FromQuery] int page = 1, [FromQuery] int pageSize = 50)
@@ -281,6 +316,12 @@ public class OrdersController : ControllerBase
         await _hub.Clients.Group("kitchen").SendAsync("OrderUpdated", response);
 
         return Ok(response);
+    }
+
+    private static bool EsTelefonoValido(string phone)
+    {
+        var digitos = new string(phone.Where(char.IsDigit).ToArray());
+        return digitos.Length >= 7 && digitos.Length <= 15;
     }
 
     private static OrderResponse BuildResponse(Order order, Dictionary<Guid, Product>? products = null)

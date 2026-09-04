@@ -176,9 +176,13 @@ interface CategoryWithProducts extends Category {
                 </label>
               }
 
-              <button (click)="startOrder()"
-                class="w-full bg-primary text-primary-foreground py-3 rounded-xl font-semibold hover:bg-primary/90 active:scale-[0.99] transition mt-2 shadow-md shadow-primary/20">
-                Ver menú
+              @if (infoError) {
+                <p class="text-destructive text-sm rounded-lg bg-destructive/10 px-3 py-2">{{ infoError }}</p>
+              }
+
+              <button (click)="startOrder()" [disabled]="tableChecking"
+                class="w-full bg-primary text-primary-foreground py-3 rounded-xl font-semibold hover:bg-primary/90 active:scale-[0.99] transition mt-2 shadow-md shadow-primary/20 disabled:opacity-60">
+                {{ tableChecking ? 'Verificando mesa...' : 'Ver menú' }}
               </button>
             </div>
           </div>
@@ -291,10 +295,13 @@ interface CategoryWithProducts extends Category {
               <button (click)="view = 'menu'" class="flex-1 bg-muted text-muted-foreground py-2 rounded-lg hover:bg-muted/70 transition">
                 Agregar más
               </button>
-              <button (click)="sendOrder()" [disabled]="sending"
-                class="flex-1 bg-primary text-primary-foreground py-2 rounded-lg hover:bg-primary/90 transition disabled:opacity-50">
+              <button (click)="sendOrder()" [disabled]="!canSend()"
+                class="flex-1 bg-primary text-primary-foreground py-2 rounded-lg hover:bg-primary/90 transition disabled:opacity-40 disabled:cursor-not-allowed">
                 {{ sending ? 'Enviando...' : 'Enviar pedido' }}
               </button>
+              @if (orderType === 'delivery' && !paymentMethod) {
+                <p class="text-xs text-muted-foreground mt-1">Elegí el método de pago para poder enviar el pedido.</p>
+              }
             </div>
           </div>
         </div>
@@ -337,6 +344,8 @@ export class MenuComponent implements OnInit, OnDestroy {
   sending = false;
   sent = false;
   error = '';
+  infoError = '';
+  tableChecking = false;
 
   activeCategory: string | null = null;
   private scrollHandler: (() => void) | null = null;
@@ -467,13 +476,57 @@ export class MenuComponent implements OnInit, OnDestroy {
     this.step = 'info';
   }
 
+  validarTelefono(phone: string): boolean {
+    const digitos = phone.replace(/\D/g, '');
+    return digitos.length >= 7 && digitos.length <= 15;
+  }
+
   startOrder() {
+    this.infoError = '';
     if (this.orderType === 'dine-in') {
-      if (!this.tableInput || this.tableInput <= 0) return;
+      if (!this.tableInput || this.tableInput <= 0) {
+        this.infoError = 'Indicá el número de tu mesa';
+        return;
+      }
       this.tableNumber = this.tableInput;
     }
-    if ((this.orderType === 'takeaway' || this.orderType === 'delivery') && !this.contactName) return;
-    if (this.orderType === 'delivery' && !this.deliveryAddress) return;
+    if (this.orderType === 'takeaway' || this.orderType === 'delivery') {
+      if (!this.contactName.trim()) {
+        this.infoError = 'Indicá tu nombre';
+        return;
+      }
+      if (!this.contactPhone.trim()) {
+        this.infoError = 'Indicá un número de teléfono';
+        return;
+      }
+      if (!this.validarTelefono(this.contactPhone)) {
+        this.infoError = 'El número de teléfono no es válido';
+        return;
+      }
+    }
+    if (this.orderType === 'delivery' && !this.deliveryAddress.trim()) {
+      this.infoError = 'Indicá la dirección de entrega';
+      return;
+    }
+    if (this.orderType === 'dine-in') {
+      this.tableChecking = true;
+      this.orderService.getTables().subscribe({
+        next: tables => {
+          this.tableChecking = false;
+          const mesa = tables.find(t => t.number === this.tableNumber);
+          if (mesa?.ocupada) {
+            this.infoError = `La mesa ${this.tableNumber} está ocupada. Elegí otra.`;
+            return;
+          }
+          this.step = 'menu';
+        },
+        error: () => {
+          this.tableChecking = false;
+          this.step = 'menu';
+        }
+      });
+      return;
+    }
     this.step = 'menu';
   }
 
@@ -502,6 +555,12 @@ export class MenuComponent implements OnInit, OnDestroy {
   cartTotal(): number {
     const deliveryFee = this.orderType === 'delivery' ? DELIVERY_FEE : 0;
     return this.subtotal() + deliveryFee;
+  }
+
+  canSend(): boolean {
+    if (this.sending || this.cart.length === 0) return false;
+    if (this.orderType === 'delivery' && !this.paymentMethod) return false;
+    return true;
   }
 
   sendOrder() {

@@ -27,7 +27,16 @@ export class OrderService {
     return this.http.get<OrderResponse[]>(`${this.apiUrl}/cashable`);
   }
 
+  getTables(): Observable<TableStatus[]> {
+    return this.http.get<TableStatus[]>(`${this.apiUrl}/tables`);
+  }
+
   pay(id: string, paymentMethod: string): Observable<OrderResponse> {
     return this.http.patch<OrderResponse>(`${this.apiUrl}/${id}/pay`, { paymentMethod });
   }
+}
+
+export interface TableStatus {
+  number: number;
+  ocupada: boolean;
 }
