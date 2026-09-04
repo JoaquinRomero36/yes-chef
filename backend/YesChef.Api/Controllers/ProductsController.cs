@@ -42,6 +42,23 @@ public class ProductsController : ControllerBase
         return Ok(products);
     }
 
+    [HttpGet("all")]
+    [Authorize(Roles = "admin")]
+    public async Task<IActionResult> GetAllForAdmin()
+    {
+        var products = await _context.Products
+            .Include(p => p.Category)
+            .OrderBy(p => p.Category!.DisplayOrder)
+            .ThenBy(p => p.Name)
+            .Select(p => new ProductDto(
+                p.Id, p.Name, p.Description, p.Price,
+                p.CategoryId, p.Category!.Name, p.ImageUrl,
+                p.IsAvailable, p.IsAvailableForAway, p.IsActive))
+            .ToListAsync();
+
+        return Ok(products);
+    }
+
     [HttpGet("{id:guid}")]
     [AllowAnonymous]
     public async Task<IActionResult> GetById(Guid id)

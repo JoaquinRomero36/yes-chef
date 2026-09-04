@@ -59,15 +59,25 @@ import { Product } from '../../../models/product.models';
         <section class="anim-fade-up">
           <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             @for (p of products; track p.id) {
-              <div class="bg-card rounded-lg border border-border p-3">
-                <h3 class="font-medium text-sm">{{ p.name }}</h3>
+              <div class="bg-card rounded-lg border border-border p-3" [class.opacity-60]="!p.isActive">
+                <div class="flex items-center justify-between gap-2">
+                  <h3 class="font-medium text-sm">{{ p.name }}</h3>
+                  @if (!p.isActive) {
+                    <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium shrink-0">Oculto</span>
+                  }
+                </div>
                 <p class="text-xs text-muted-foreground">{{ p.categoryName }}</p>
                 <div class="flex items-center justify-between mt-2">
                   <span class="text-primary font-semibold">\${{ p.price.toFixed(2) }}</span>
                   <div class="flex items-center gap-2">
-                    @if (!p.isAvailableForAway) {
+                    @if (!p.isAvailableForAway && p.isActive) {
                       <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-medium">Solo local</span>
                     }
+                    <button (click)="toggleProduct(p)" [disabled]="prodToggling === p.id"
+                      class="text-xs disabled:opacity-40 transition"
+                      [class]="p.isActive ? 'text-muted-foreground hover:text-foreground' : 'text-green-600 hover:text-green-700'">
+                      {{ p.isActive ? 'Desactivar' : 'Activar' }}
+                    </button>
                     <button (click)="deleteProduct(p)" class="text-destructive hover:text-destructive/80 text-xs">✕</button>
                   </div>
                 </div>
@@ -145,6 +155,7 @@ export class AdminComponent implements OnInit {
   catSuccess = '';
   prodError = '';
   prodSuccess = '';
+  prodToggling: string | null = null;
 
   constructor(
     private categoryService: CategoryService,
@@ -203,7 +214,7 @@ export class AdminComponent implements OnInit {
   }
 
   loadProducts() {
-    this.productService.getAll().subscribe(p => this.products = p);
+    this.productService.getAllAdmin().subscribe(p => this.products = p);
   }
 
   addCategory() {
@@ -273,6 +284,32 @@ export class AdminComponent implements OnInit {
       },
       error: (err) => {
         this.prodError = err.error?.message || 'Error al eliminar el producto';
+      }
+    });
+  }
+
+  toggleProduct(p: Product) {
+    this.prodError = '';
+    this.prodSuccess = '';
+    this.prodToggling = p.id;
+    this.productService.update(p.id, {
+      name: p.name,
+      description: p.description,
+      price: p.price,
+      categoryId: p.categoryId,
+      imageUrl: p.imageUrl,
+      isAvailable: p.isAvailable,
+      isAvailableForAway: p.isAvailableForAway,
+      isActive: !p.isActive
+    }).subscribe({
+      next: () => {
+        this.prodToggling = null;
+        this.prodSuccess = p.isActive ? 'Producto desactivado' : 'Producto activado';
+        this.loadProducts();
+      },
+      error: (err) => {
+        this.prodToggling = null;
+        this.prodError = err.error?.message || 'Error al cambiar el estado del producto';
       }
     });
   }

@@ -17,6 +17,10 @@ export class ProductService {
     return this.http.get<Product[]>(this.apiUrl, { params });
   }
 
+  getAllAdmin(): Observable<Product[]> {
+    return this.http.get<Product[]>(`${this.apiUrl}/all`);
+  }
+
   getById(id: string): Observable<Product> {
     return this.http.get<Product>(`${this.apiUrl}/${id}`);
   }
