@@ -78,21 +78,21 @@ import { Subscription } from 'rxjs';
 
             <div class="flex gap-2">
               @if (order.status === 'pending') {
-                <button (click)="updateStatus(order.id, 'preparing')" [disabled]="updatingId === order.id"
+                <button (click)="updateStatus(order.id, 'preparing')" [disabled]="updatingId === order.id || isLocked(order.id)"
                   class="flex-1 bg-secondary text-secondary-foreground py-1.5 rounded-lg text-sm hover:bg-secondary/90 transition disabled:opacity-50">
-                  {{ updatingId === order.id ? 'Actualizando...' : 'En preparación' }}
+                  {{ actionText(order, 'En preparación') }}
                 </button>
               }
               @if (order.status === 'preparing') {
-                <button (click)="updateStatus(order.id, 'ready')" [disabled]="updatingId === order.id"
+                <button (click)="updateStatus(order.id, 'ready')" [disabled]="updatingId === order.id || isLocked(order.id)"
                   class="flex-1 bg-primary text-primary-foreground py-1.5 rounded-lg text-sm hover:bg-primary/90 transition disabled:opacity-50">
-                  {{ updatingId === order.id ? 'Actualizando...' : 'Listo' }}
+                  {{ actionText(order, 'Listo') }}
                 </button>
               }
               @if (order.status === 'ready') {
-                <button (click)="updateStatus(order.id, 'delivered')" [disabled]="updatingId === order.id"
+                <button (click)="updateStatus(order.id, 'delivered')" [disabled]="updatingId === order.id || isLocked(order.id)"
                   class="flex-1 bg-muted text-muted-foreground py-1.5 rounded-lg text-sm hover:bg-muted/70 transition disabled:opacity-50">
-                  {{ updatingId === order.id ? 'Actualizando...' : 'Entregado' }}
+                  {{ actionText(order, 'Entregado') }}
                 </button>
               }
             </div>
@@ -106,6 +106,7 @@ export class KitchenComponent implements OnInit, OnDestroy {
   orders: OrderResponse[] = [];
   filterType = '';
   updatingId: string | null = null;
+  private lockedUntil = new Map<string, number>();
   private subs: Subscription[] = [];
 
   constructor(
@@ -149,7 +150,7 @@ export class KitchenComponent implements OnInit, OnDestroy {
   }
 
   updateStatus(id: string, status: string) {
-    if (this.updatingId) return;
+    if (this.updatingId || this.isLocked(id)) return;
     this.updatingId = id;
     this.orderService.updateStatus(id, status).subscribe({
       next: updated => {
@@ -161,12 +162,35 @@ export class KitchenComponent implements OnInit, OnDestroy {
             this.orders[idx] = updated;
           }
         }
+        this.lockedUntil.set(id, Date.now() + 10000);
         this.updatingId = null;
       },
       error: () => {
         this.updatingId = null;
       }
     });
+  }
+
+  isLocked(id: string): boolean {
+    const until = this.lockedUntil.get(id);
+    if (!until) return false;
+    if (Date.now() >= until) {
+      this.lockedUntil.delete(id);
+      return false;
+    }
+    return true;
+  }
+
+  lockRemaining(id: string): number {
+    const until = this.lockedUntil.get(id);
+    if (!until) return 0;
+    return Math.max(1, Math.ceil((until - Date.now()) / 1000));
+  }
+
+  actionText(order: OrderResponse, accion: string): string {
+    if (this.updatingId === order.id) return 'Actualizando...';
+    if (this.isLocked(order.id)) return 'Esperá ' + this.lockRemaining(order.id) + 's';
+    return accion;
   }
 
   statusClass(s: string): string {
