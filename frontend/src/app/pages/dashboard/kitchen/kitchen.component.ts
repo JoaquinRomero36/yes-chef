@@ -78,21 +78,21 @@ import { Subscription } from 'rxjs';
 
             <div class="flex gap-2">
               @if (order.status === 'pending') {
-                <button (click)="updateStatus(order.id, 'preparing')"
-                  class="flex-1 bg-secondary text-secondary-foreground py-1.5 rounded-lg text-sm hover:bg-secondary/90 transition">
-                  En preparación
+                <button (click)="updateStatus(order.id, 'preparing')" [disabled]="updatingId === order.id"
+                  class="flex-1 bg-secondary text-secondary-foreground py-1.5 rounded-lg text-sm hover:bg-secondary/90 transition disabled:opacity-50">
+                  {{ updatingId === order.id ? 'Actualizando...' : 'En preparación' }}
                 </button>
               }
               @if (order.status === 'preparing') {
-                <button (click)="updateStatus(order.id, 'ready')"
-                  class="flex-1 bg-primary text-primary-foreground py-1.5 rounded-lg text-sm hover:bg-primary/90 transition">
-                  Listo
+                <button (click)="updateStatus(order.id, 'ready')" [disabled]="updatingId === order.id"
+                  class="flex-1 bg-primary text-primary-foreground py-1.5 rounded-lg text-sm hover:bg-primary/90 transition disabled:opacity-50">
+                  {{ updatingId === order.id ? 'Actualizando...' : 'Listo' }}
                 </button>
               }
               @if (order.status === 'ready') {
-                <button (click)="updateStatus(order.id, 'delivered')"
-                  class="flex-1 bg-muted text-muted-foreground py-1.5 rounded-lg text-sm hover:bg-muted/70 transition">
-                  Entregado
+                <button (click)="updateStatus(order.id, 'delivered')" [disabled]="updatingId === order.id"
+                  class="flex-1 bg-muted text-muted-foreground py-1.5 rounded-lg text-sm hover:bg-muted/70 transition disabled:opacity-50">
+                  {{ updatingId === order.id ? 'Actualizando...' : 'Entregado' }}
                 </button>
               }
             </div>
@@ -105,6 +105,7 @@ import { Subscription } from 'rxjs';
 export class KitchenComponent implements OnInit, OnDestroy {
   orders: OrderResponse[] = [];
   filterType = '';
+  updatingId: string | null = null;
   private subs: Subscription[] = [];
 
   constructor(
@@ -148,14 +149,22 @@ export class KitchenComponent implements OnInit, OnDestroy {
   }
 
   updateStatus(id: string, status: string) {
-    this.orderService.updateStatus(id, status).subscribe(updated => {
-      const idx = this.orders.findIndex(o => o.id === updated.id);
-      if (idx >= 0) {
-        if (updated.status === 'delivered' || updated.status === 'cancelled') {
-          this.orders = this.orders.filter(o => o.id !== updated.id);
-        } else {
-          this.orders[idx] = updated;
+    if (this.updatingId) return;
+    this.updatingId = id;
+    this.orderService.updateStatus(id, status).subscribe({
+      next: updated => {
+        const idx = this.orders.findIndex(o => o.id === updated.id);
+        if (idx >= 0) {
+          if (updated.status === 'delivered' || updated.status === 'cancelled') {
+            this.orders = this.orders.filter(o => o.id !== updated.id);
+          } else {
+            this.orders[idx] = updated;
+          }
         }
+        this.updatingId = null;
+      },
+      error: () => {
+        this.updatingId = null;
       }
     });
   }
