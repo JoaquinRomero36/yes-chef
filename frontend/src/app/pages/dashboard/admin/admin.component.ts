@@ -32,6 +32,12 @@ import { Product } from '../../../models/product.models';
             <input [(ngModel)]="newCat.displayOrder" type="number" placeholder="Orden" class="border border-border px-3 py-1.5 rounded-lg text-sm w-20 bg-card outline-none focus:ring-2 focus:ring-primary">
             <button (click)="addCategory()" class="bg-primary text-primary-foreground px-4 py-1.5 rounded-lg text-sm hover:bg-primary/90 transition">Agregar</button>
           </div>
+          @if (catError) {
+            <p class="text-destructive text-sm mb-2">{{ catError }}</p>
+          }
+          @if (catSuccess) {
+            <p class="text-primary text-sm mb-2">{{ catSuccess }}</p>
+          }
 
           <div class="space-y-2">
             @for (cat of categories; track cat.id) {
@@ -86,6 +92,12 @@ import { Product } from '../../../models/product.models';
                 Disponible para delivery/takeaway
               </label>
               <button (click)="addProduct()" class="bg-primary text-primary-foreground px-4 py-1.5 rounded-lg text-sm hover:bg-primary/90 transition">Guardar</button>
+              @if (prodError) {
+                <p class="text-destructive text-sm">{{ prodError }}</p>
+              }
+              @if (prodSuccess) {
+                <p class="text-primary text-sm">{{ prodSuccess }}</p>
+              }
             </div>
           </details>
         </section>
@@ -129,6 +141,10 @@ export class AdminComponent implements OnInit {
   newUser = { fullName: '', username: '', email: '', password: '', roleId: '' };
   userError = '';
   userSuccess = '';
+  catError = '';
+  catSuccess = '';
+  prodError = '';
+  prodSuccess = '';
 
   constructor(
     private categoryService: CategoryService,
@@ -192,22 +208,42 @@ export class AdminComponent implements OnInit {
 
   addCategory() {
     if (!this.newCat.name) return;
+    this.catError = '';
+    this.catSuccess = '';
     this.categoryService.create({
       name: this.newCat.name,
       description: this.newCat.description || null,
       displayOrder: this.newCat.displayOrder
-    }).subscribe(() => {
-      this.newCat = { name: '', description: '', displayOrder: 0 };
-      this.loadCategories();
+    }).subscribe({
+      next: () => {
+        this.newCat = { name: '', description: '', displayOrder: 0 };
+        this.catSuccess = 'Categoría creada correctamente';
+        this.loadCategories();
+      },
+      error: (err) => {
+        this.catError = err.error?.message || 'Error al crear la categoría';
+      }
     });
   }
 
   deleteCategory(cat: Category) {
-    this.categoryService.delete(cat.id).subscribe(() => this.loadCategories());
+    this.catError = '';
+    this.catSuccess = '';
+    this.categoryService.delete(cat.id).subscribe({
+      next: () => {
+        this.catSuccess = 'Categoría eliminada';
+        this.loadCategories();
+      },
+      error: (err) => {
+        this.catError = err.error?.message || 'Error al eliminar la categoría';
+      }
+    });
   }
 
   addProduct() {
     if (!this.newProd.name || !this.newProd.categoryId) return;
+    this.prodError = '';
+    this.prodSuccess = '';
     this.productService.create({
       name: this.newProd.name,
       description: this.newProd.description || null,
@@ -215,13 +251,29 @@ export class AdminComponent implements OnInit {
       categoryId: this.newProd.categoryId,
       imageUrl: null,
       isAvailableForAway: this.newProd.isAvailableForAway
-    }).subscribe(() => {
-      this.newProd = { name: '', description: '', price: 0, categoryId: '', isAvailableForAway: true };
-      this.loadProducts();
+    }).subscribe({
+      next: () => {
+        this.newProd = { name: '', description: '', price: 0, categoryId: '', isAvailableForAway: true };
+        this.prodSuccess = 'Producto creado correctamente';
+        this.loadProducts();
+      },
+      error: (err) => {
+        this.prodError = err.error?.message || 'Error al crear el producto';
+      }
     });
   }
 
   deleteProduct(p: Product) {
-    this.productService.delete(p.id).subscribe(() => this.loadProducts());
+    this.prodError = '';
+    this.prodSuccess = '';
+    this.productService.delete(p.id).subscribe({
+      next: () => {
+        this.prodSuccess = 'Producto eliminado';
+        this.loadProducts();
+      },
+      error: (err) => {
+        this.prodError = err.error?.message || 'Error al eliminar el producto';
+      }
+    });
   }
 }
