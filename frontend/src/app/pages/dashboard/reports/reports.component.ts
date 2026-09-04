@@ -63,6 +63,10 @@ import { IconComponent } from '../../../components/icon/icon.component';
         }
       }
 
+      @if (rangeError) {
+        <p class="bg-destructive/10 text-destructive px-4 py-2 rounded-lg mb-4">{{ rangeError }}</p>
+      }
+
       @if (summary) {
         <section class="bg-card rounded-xl border border-border p-4 mb-6 anim-fade-up">
           <h2 class="font-semibold text-foreground mb-3">Resumen del período</h2>
@@ -121,6 +125,7 @@ export class ReportsComponent implements OnInit {
   daily: DailySales | null = null;
   summary: Summary | null = null;
   topProducts: TopProduct[] = [];
+  rangeError = '';
 
   constructor(private reports: ReportsService) {}
 
@@ -134,8 +139,15 @@ export class ReportsComponent implements OnInit {
   }
 
   loadRange() {
-    this.reports.getSummary(this.rangeFrom, this.rangeTo).subscribe(s => this.summary = s);
-    this.reports.getTopProducts(this.rangeFrom, this.rangeTo).subscribe(p => this.topProducts = p);
+    this.rangeError = '';
+    this.reports.getSummary(this.rangeFrom, this.rangeTo).subscribe({
+      next: s => this.summary = s,
+      error: () => this.rangeError = 'No se pudieron cargar los reportes del rango'
+    });
+    this.reports.getTopProducts(this.rangeFrom, this.rangeTo).subscribe({
+      next: p => this.topProducts = p,
+      error: () => this.rangeError = 'No se pudieron cargar los reportes del rango'
+    });
   }
 
   maxRevenue() {
