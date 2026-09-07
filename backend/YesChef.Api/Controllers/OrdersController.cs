@@ -90,7 +90,8 @@ public class OrdersController : ControllerBase
             var mesaOcupada = await _context.Orders
                 .AnyAsync(o => o.TableId == tableId
                     && o.Status != "delivered"
-                    && o.Status != "cancelled");
+                    && o.Status != "cancelled"
+                    && o.Status != "pending_payment");
 
             if (mesaOcupada)
                 return Conflict(new { message = $"La mesa {request.TableNumber.Value} ya tiene un pedido en curso" });
@@ -118,6 +119,9 @@ public class OrdersController : ControllerBase
 
         var deliveryFee = request.OrderType == "delivery" ? Business.DeliveryFee : 0m;
 
+        var normalizedPayment = PaymentMethods.Normalize(request.PaymentMethod);
+        var esPagoOnline = normalizedPayment == "mercado_pago";
+
         var order = new Order
         {
             TableId = tableId,
@@ -127,9 +131,10 @@ public class OrdersController : ControllerBase
             DeliveryAddress = request.DeliveryAddress,
             DeliveryFee = deliveryFee,
             Notes = request.Notes,
-            Status = "pending",
-            PaymentMethod = PaymentMethods.Normalize(request.PaymentMethod),
-            PaidAt = request.PaymentMethod is null ? null : DateTime.UtcNow
+            // Delivery pago con Mercado Pago: queda pendiente de pago hasta confirmar online.
+            Status = esPagoOnline ? "pending_payment" : "pending",
+            PaymentMethod = normalizedPayment,
+            PaidAt = request.PaymentMethod is null || esPagoOnline ? null : DateTime.UtcNow
         };
 
         foreach (var item in request.Items)
@@ -170,7 +175,7 @@ public class OrdersController : ControllerBase
             .Include(o => o.Table)
             .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.Product)
-            .Where(o => o.Status != "delivered" && o.Status != "cancelled");
+            .Where(o => o.Status != "delivered" && o.Status != "cancelled" && o.Status != "pending_payment");
 
         if (!string.IsNullOrEmpty(type))
             query = query.Where(o => o.OrderType == type);
@@ -200,7 +205,7 @@ public class OrdersController : ControllerBase
             .GroupJoin(
                 await _context.Orders
                     .AsNoTracking()
-                    .Where(o => o.Status != "delivered" && o.Status != "cancelled")
+                    .Where(o => o.Status != "delivered" && o.Status != "cancelled" && o.Status != "pending_payment")
                     .ToListAsync(),
                 t => t.Id,
                 o => o.TableId,
@@ -256,6 +261,7 @@ public class OrdersController : ControllerBase
 
         var allowedTransitions = new Dictionary<string, string[]>
         {
+            ["pending_payment"] = Array.Empty<string>(),
             ["pending"] = new[] { "preparing", "cancelled" },
             ["preparing"] = new[] { "ready", "cancelled" },
             ["ready"] = new[] { "delivered", "cancelled" },

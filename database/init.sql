@@ -91,6 +91,24 @@ CREATE INDEX idx_orders_created_at ON orders(created_at);
 CREATE INDEX idx_order_items_order_id ON order_items(order_id);
 CREATE INDEX idx_products_category_id ON products(category_id);
 
+CREATE TABLE IF NOT EXISTS payment_transactions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    gateway VARCHAR(50) NOT NULL DEFAULT 'mercado_pago',
+    external_id VARCHAR(255),
+    status VARCHAR(50) NOT NULL DEFAULT 'pending',
+    amount DECIMAL(10,2) NOT NULL DEFAULT 0,
+    method VARCHAR(50),
+    raw TEXT,
+    confirmed_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX idx_payment_transactions_order_id ON payment_transactions(order_id);
+CREATE INDEX idx_payment_transactions_external_id ON payment_transactions(external_id);
+CREATE INDEX idx_payment_transactions_status ON payment_transactions(status);
+
 CREATE TABLE IF NOT EXISTS cash_registers (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     opened_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),

@@ -15,6 +15,7 @@ public class AppDbContext : DbContext
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<CashRegister> CashRegisters => Set<CashRegister>();
+    public DbSet<PaymentTransaction> PaymentTransactions => Set<PaymentTransaction>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -73,6 +74,17 @@ public class AppDbContext : DbContext
                 .WithMany(p => p.OrderItems)
                 .HasForeignKey(oi => oi.ProductId);
             e.HasIndex(oi => oi.OrderId);
+        });
+
+        modelBuilder.Entity<PaymentTransaction>(e =>
+        {
+            e.HasOne(t => t.Order)
+                .WithMany()
+                .HasForeignKey(t => t.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(t => t.OrderId);
+            e.HasIndex(t => t.ExternalId);
+            e.HasIndex(t => t.Status);
         });
     }
 }

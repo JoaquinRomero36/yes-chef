@@ -292,17 +292,33 @@ interface CategoryWithProducts extends Category {
             <textarea [(ngModel)]="notes" placeholder="Notas para la cocina..." rows="2"
               class="w-full px-3 py-2 border border-border rounded-lg text-sm bg-card outline-none focus:ring-2 focus:ring-primary mt-2"></textarea>
             <div class="flex gap-2">
-              <button (click)="view = 'menu'" class="flex-1 bg-muted text-muted-foreground py-2 rounded-lg hover:bg-muted/70 transition">
+              <button (click)="view = 'menu'" [disabled]="sending || paying" class="flex-1 bg-muted text-muted-foreground py-2 rounded-lg hover:bg-muted/70 transition disabled:opacity-40">
                 Agregar más
               </button>
               <button (click)="sendOrder()" [disabled]="!canSend()"
                 class="flex-1 bg-primary text-primary-foreground py-2 rounded-lg hover:bg-primary/90 transition disabled:opacity-40 disabled:cursor-not-allowed">
-                {{ sending ? 'Enviando...' : 'Enviar pedido' }}
+                {{ sending ? 'Enviando...' : paying ? 'Procesando pago...' : 'Enviar pedido' }}
               </button>
               @if (orderType === 'delivery' && !paymentMethod) {
                 <p class="text-xs text-muted-foreground mt-1">Elegí el método de pago para poder enviar el pedido.</p>
               }
+              @if (paymentNotice) {
+                <p class="text-xs text-primary mt-1">{{ paymentNotice }}</p>
+              }
+              @if (paymentError) {
+                <p class="text-xs text-destructive mt-1">{{ paymentError }}</p>
+              }
             </div>
+            @if (paying && pendingPaymentId) {
+              <div class="mt-4 bg-card border border-border rounded-lg p-4 anim-fade-up">
+                <p class="font-medium text-foreground mb-2">Pago con Mercado Pago</p>
+                <p class="text-sm text-muted-foreground mb-3">Si el pago no se confirmó automáticamente, confirmalo acá:</p>
+                <button (click)="confirmAndFinish()" [disabled]="confirming"
+                  class="w-full bg-emerald-600 text-white py-2 rounded-lg hover:bg-emerald-700 transition disabled:opacity-40">
+                  {{ confirming ? 'Confirmando...' : 'Ya pagué — confirmar pedido' }}
+                </button>
+              </div>
+            }
           </div>
         </div>
       }
@@ -326,6 +342,12 @@ export class MenuComponent implements OnInit, OnDestroy {
   view: 'menu' | 'cart' = 'menu';
   orderType: 'dine-in' | 'takeaway' | 'delivery' = 'dine-in';
   paymentMethod: PaymentMethod | null = null;
+
+  paying = false;
+  confirming = false;
+  pendingPaymentId: string | null = null;
+  paymentNotice = '';
+  paymentError = '';
 
   get paymentMethods(): { value: PaymentMethod; label: string }[] {
     return this.orderType === 'delivery' ? PAYMENT_METHODS_DELIVERY : PAYMENT_METHODS;
@@ -569,6 +591,8 @@ export class MenuComponent implements OnInit, OnDestroy {
     this.sending = true;
     this.error = '';
     this.sent = false;
+    this.paymentNotice = '';
+    this.paymentError = '';
 
     this.orderService.create({
       orderType: this.orderType,
@@ -584,24 +608,78 @@ export class MenuComponent implements OnInit, OnDestroy {
         notes: null
       }))
     }).subscribe({
-      next: () => {
-        this.sent = true;
-        this.cart = [];
-        this.notes = '';
-        this.paymentMethod = null;
-        this.orderType = 'dine-in';
-        this.tableNumber = null;
-        this.contactName = '';
-        this.contactPhone = '';
-        this.deliveryAddress = '';
-        this.step = 'type';
-        this.view = 'menu';
-        this.sending = false;
+      next: (order) => {
+        if (this.paymentMethod === 'mercado_pago' && order.id) {
+          this.startOnlinePayment(order.id);
+          return;
+        }
+        this.resetAfterSent();
       },
       error: (err) => {
         this.error = err.error?.message || 'Error al enviar pedido';
         this.sending = false;
       }
     });
+  }
+
+  private startOnlinePayment(orderId: string) {
+    this.sending = false;
+    this.paying = true;
+    this.pendingPaymentId = orderId;
+
+    this.orderService.checkout(orderId).subscribe({
+      next: (res) => {
+        if (res.checkoutUrl === 'simulado') {
+          // Modo simulado: no hay pasarela real, confirmamos directo.
+          this.confirmAndFinish();
+          return;
+        }
+        this.paymentNotice = 'Completá el pago en la ventana de Mercado Pago.';
+        window.open(res.checkoutUrl, '_blank');
+      },
+      error: (err) => {
+        this.paying = false;
+        this.paymentError = err.error?.message || 'No se pudo iniciar el pago.';
+      }
+    });
+  }
+
+  confirmAndFinish() {
+    if (!this.pendingPaymentId) return;
+    this.confirming = true;
+    this.paymentError = '';
+
+    this.orderService.confirmPayment(this.pendingPaymentId).subscribe({
+      next: () => {
+        this.confirming = false;
+        this.paying = false;
+        this.pendingPaymentId = null;
+        this.paymentNotice = '¡Pago confirmado!';
+        this.resetAfterSent();
+      },
+      error: (err) => {
+        this.confirming = false;
+        this.paymentError = err.error?.message || 'No se pudo confirmar el pago.';
+      }
+    });
+  }
+
+  private resetAfterSent() {
+    this.sent = true;
+    this.cart = [];
+    this.notes = '';
+    this.paymentMethod = null;
+    this.orderType = 'dine-in';
+    this.tableNumber = null;
+    this.contactName = '';
+    this.contactPhone = '';
+    this.deliveryAddress = '';
+    this.step = 'type';
+    this.view = 'menu';
+    this.sending = false;
+    this.paying = false;
+    this.pendingPaymentId = null;
+    this.paymentNotice = '';
+    this.paymentError = '';
   }
 }

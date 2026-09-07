@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { OrderService } from '../../../services/order.service';
@@ -91,7 +91,7 @@ import { Subscription } from 'rxjs';
               }
               @if (order.status === 'ready') {
                 <button (click)="updateStatus(order.id, 'delivered')" [disabled]="updatingId === order.id || isLocked(order.id)"
-                  class="flex-1 bg-muted text-muted-foreground py-1.5 rounded-lg text-sm hover:bg-muted/70 transition disabled:opacity-50">
+                  class="flex-1 bg-emerald-600 text-white py-1.5 rounded-lg text-sm hover:bg-emerald-700 transition disabled:opacity-50">
                   {{ actionText(order, 'Entregado') }}
                 </button>
               }
@@ -108,15 +108,20 @@ export class KitchenComponent implements OnInit, OnDestroy {
   updatingId: string | null = null;
   private lockedUntil = new Map<string, number>();
   private subs: Subscription[] = [];
+  private lockTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor(
     private orderService: OrderService,
-    private signalR: SignalRService
+    private signalR: SignalRService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
     this.loadOrders();
     this.signalR.start();
+
+    // Mantiene la cuenta regresiva del lock fluida y libera el botón al vencer.
+    this.lockTimer = setInterval(() => this.tickLocks(), 250);
 
     this.subs.push(
       this.signalR.newOrder$.subscribe(order => {
@@ -139,8 +144,18 @@ export class KitchenComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    if (this.lockTimer) clearInterval(this.lockTimer);
     this.subs.forEach(s => s.unsubscribe());
     this.signalR.stop();
+  }
+
+  private tickLocks() {
+    if (this.lockedUntil.size === 0) return;
+    const now = Date.now();
+    for (const [id, until] of this.lockedUntil) {
+      if (now >= until) this.lockedUntil.delete(id);
+    }
+    this.cdr.detectChanges();
   }
 
   loadOrders() {

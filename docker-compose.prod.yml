@@ -30,6 +30,8 @@ services:
       Jwt__Key: ${JWT_KEY}
       Jwt__Issuer: YesChef.Api
       Jwt__Audience: YesChef.App
+      Payment__MercadoPago__AccessToken: ${MP_ACCESS_TOKEN}
+      Payment__MercadoPago__WebhookSecret: ${MP_WEBHOOK_SECRET}
     depends_on:
       postgres:
         condition: service_healthy

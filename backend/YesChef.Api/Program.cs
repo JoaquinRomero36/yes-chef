@@ -29,6 +29,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IPaymentGatewayService, MercadoPagoPaymentGatewayService>();
+builder.Services.AddHttpClient("MercadoPago", client =>
+{
+    client.BaseAddress = new Uri("https://api.mercadopago.com");
+    client.Timeout = TimeSpan.FromSeconds(20);
+});
 
 var jwtKey = builder.Configuration["Jwt:Key"]!;
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

@@ -34,6 +34,27 @@ export class OrderService {
   pay(id: string, paymentMethod: string): Observable<OrderResponse> {
     return this.http.patch<OrderResponse>(`${this.apiUrl}/${id}/pay`, { paymentMethod });
   }
+
+  checkout(id: string): Observable<CheckoutResponse> {
+    return this.http.post<CheckoutResponse>(`/api/payments/${id}/checkout`, {});
+  }
+
+  confirmPayment(id: string): Observable<ConfirmPaymentResponse> {
+    return this.http.post<ConfirmPaymentResponse>(`/api/payments/${id}/confirm`, {});
+  }
+}
+
+export interface CheckoutResponse {
+  checkoutUrl: string;
+  transactionId: string;
+}
+
+export interface ConfirmPaymentResponse {
+  message: string;
+  id: string;
+  status: string;
+  paymentMethod: string;
+  paidAt: string;
 }
 
 export interface TableStatus {
